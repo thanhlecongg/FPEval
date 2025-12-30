@@ -6,13 +6,4 @@
 [![Dataset](https://img.shields.io/badge/Dataset-v1.0-yellow.svg)]()
 
 
-This repository contains evaluation infrastructure for FPEval including FPBench benchmark, evaluation infrastructures and wrappers for calling LLMs. If you found this repository to be useful, please cite our research paper:
-
-```
-@article{lang2025fpeval,
-  title={Perish or Flourish? A Holistic Evaluation of Large Language Models for Code Generation in Functional Programming},
-  author={Lang, Nguyet-Anh, and Lang, Eric and Le-Cong, Thanh and Le, Bach and Huynh, Quyet-Thang},
-  year={2025},
-  url={https://github.com/thanhlecongg/FPEval/}
-}
-```
+This repository contains evaluation infrastructure for FPEval including FPBench benchmark, evaluation infrastructures and wrappers for calling LLMs. 
