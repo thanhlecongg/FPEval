@@ -1,0 +1,17 @@
+# dune build --root .
+# OCAMLPARAM: unset
+# Shared cache: enabled-except-user-rules
+# Shared cache location: /home/tlecong/.cache/dune/db
+# Workspace root:
+# /data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/envs/ocaml
+# Auto-detected concurrency: 64
+# Dune context:
+#  { name = "default"
+#  ; kind = "default"
+#  ; profile = Dev
+#  ; merlin = true
+#  ; fdo_target_exe = None
+#  ; build_dir = In_build_dir "default"
+#  ; instrument_with = []
+#  }
+$ /home/tlecong/.opam/4.08.1/bin/ocamlc.opt -config > /tmp/dune_334abe_output

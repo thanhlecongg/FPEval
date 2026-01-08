@@ -1,0 +1,5 @@
+(executable
+ (public_name ocaml)
+ (name main)
+ (flags :standard -warn-error -a)
+ (libraries ocaml ounit2))
