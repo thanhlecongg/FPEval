@@ -5,18 +5,26 @@ import pickle as pkl
 from pathlib import Path
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-s
 
 class CodeRepairAssistant:
     def __init__(self, model_name, lang):
         self.lang = lang
         self.model_name = model_name
-        self.llm = ChatOpenAI(
-            model="gpt-3.5-turbo",
-            temperature=1,
-            reasoning_effort="none",
-            max_tokens=2048,
-        )
+        if self.model_name == "gpt-5":
+            self.llm = ChatOpenAI(
+                model="gpt-5.1",
+                temperature=1,
+                model_kwargs={
+                "reasoning_effort": "none" 
+            },
+                max_tokens=2048,
+            )
+        else:
+            self.llm = ChatOpenAI(
+                model=model_name,
+                temperature=0.7,
+                max_tokens=2048,
+            )
         self.prompt_template = ChatPromptTemplate.from_messages([
             (
                 "system",
@@ -41,7 +49,6 @@ class CodeRepairAssistant:
         })
         messages = prompt.to_messages()
         response = self.llm.predict_messages(messages)
-        # Sửa lại response_metadata thành dict rỗng hoặc dict hợp lệ
         response_metadata = {}
         fixed_code = self.extract_code_from_response(response.content)
         return fixed_code, response.content, response_metadata, messages[0].content, messages[1].content
@@ -52,14 +59,10 @@ class CodeRepairAssistant:
         return code_blocks[0].strip() if code_blocks else text.strip()
 
 problem_path =  '/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/remain1'
-def main():
-    # sub_dataset_path = Path("/data/scratch/projects/punim1928/NA/RQ3/sampled_100_files.pkl")
-    # with open(sub_dataset_path, "rb") as f:
-    #     sub_dataset = set(pkl.load(f))
-
+def main(langs=None, models=None):
     input_folder = Path("/data/scratch/projects/punim1928/NA/llms_results")
-    langs = ['haskell']
-    models = ["gpt-5"]
+    if langs is None: langs = ['haskell']
+    if models is None: models = ["gpt-3.5-turbo"]
     for lang in langs:
         for model_name in models:
             output_folder = Path("/data/scratch/projects/punim1928/NA/RQ3/result_llms") / lang / model_name
@@ -133,4 +136,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(langs=['haskell'], models=['gpt-3.5-turbo'])
