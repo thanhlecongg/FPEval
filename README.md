@@ -8,12 +8,14 @@
 
 This repository contains evaluation infrastructure for FPEval, an holistic evaluation framework for code generation in functional programming. FPEval includes its FPBench benchmark, evaluation infrastructures and wrappers for calling LLMs. If you found this repository to be useful, please cite our research paper:
 
+```
 @article{lang2026perish,
   title={Perish or Flourish? A Holistic Evaluation of Large Language Models for Code Generation in Functional Programming},
   author={Lang, Nguyet-Anh H and Lang, Eric and Le-Cong, Thanh and Le, Bach and Huynh, Quyet-Thang},
   journal={arXiv preprint arXiv:2601.02060},
   year={2026}
 }
+```
 
 ## Prerequisites and Compatibility:
 
