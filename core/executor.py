@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 import os
-from .utils import execute_command
+from utils import execute_command
 import re
 
 

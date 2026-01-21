@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  fpeval:
+    container_name: fpeval
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: baoloc2102/fpeval:v1
+    platform: linux/amd64
+    # Request all available GPUs (requires Docker with NVIDIA support)
+    gpus: all
+    # Increase shared memory size to avoid OOM issues when installing/running libs
+    shm_size: "16g"
+    working_dir: /workspace
+    volumes:
+      # Mount the current repository into the container project directory
+      - .:/workspace
+      # Persistent pip cache to reduce repeated downloads and pressure on container FS
+      # - pip-cache:/root/.cache/pip
+    # Load API keys and other configuration from a local .env file
+    env_file:
+      - .env
+    entrypoint: ["/bin/bash", "-c", "sleep infinity"]
+    stdin_open: true  # equivalent to -it
+    tty: true
+    # Default command opens a shell; you can override it, e.g.:
+    #   docker compose run fpeval python3 core/run_dataset.py ...
+    command: bash

@@ -3,11 +3,11 @@ from langchain_openai import ChatOpenAI
 from langchain_core.runnables import Runnable, RunnableConfig
 from langchain_huggingface.llms import HuggingFacePipeline
 from abc import abstractmethod, ABC
-from .state import State
+from state import State
 import torch
 import re
 from langchain_core.messages.human import HumanMessage
-from .utils import update_messages
+from utils import update_messages
 from langchain_core.tracers.langchain import wait_for_all_tracers
 from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
 from langchain_anthropic import ChatAnthropic
@@ -50,6 +50,8 @@ def create_llm(model_name: str):
             "reasoning_effort": "none" 
         },
             max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY', '')
         )
     if model_name == "gpt-3.5-turbo":
         print("Using gpt-3.5-turbo")
@@ -57,6 +59,8 @@ def create_llm(model_name: str):
             model="gpt-3.5-turbo",
             temperature=0.7,
             max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY', '')
         )
     elif model_name == "gpt-4o":
         print("Using gpt-4o")
@@ -64,6 +68,8 @@ def create_llm(model_name: str):
             model="gpt-4o",
             temperature=0.7,
             max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY', '')
         )
     elif model_name == "gpt-4.1":
         print("Using gpt-4.1")
@@ -71,6 +77,8 @@ def create_llm(model_name: str):
             model="gpt-4.1",
             temperature=0.7,
             max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY', '')
         )
     elif model_name == "gpt-o1":
         print("Using gpt-o1")
@@ -78,6 +86,8 @@ def create_llm(model_name: str):
             model="gpt-o1",
             temperature=1,
             max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY', '')
         )
     elif model_name == "gpt-o3-mini":
         print("Using gpt-o3-mini")
@@ -85,23 +95,31 @@ def create_llm(model_name: str):
             model="o3-mini",
             temperature=1,
             max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY')
         )
     elif model_name == "sonnet":
         return ChatAnthropic(
             model="claude-3-5-sonnet-20241022",
             max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            # api_key=os.environ.get('OPENAI_API_KEY', '')
             temperature=0.7
         )
     elif model_name == "haiku":
         return ChatAnthropic(
             model="claude-3-5-haiku-20241022",
             max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            # api_key=os.environ.get('OPENAI_API_KEY', '')
             temperature=0.7,
         )
     elif model_name == "opus":
         return ChatAnthropic(
             model="claude-3-5-opus-20240229",
             max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            # api_key=os.environ.get('OPENAI_API_KEY', '')
             temperature=0.7
         )
     elif model_name == "deepseekv3":
@@ -111,6 +129,8 @@ def create_llm(model_name: str):
             base_url="https://api.deepseek.com/v1",
             temperature=0.7,
             max_tokens=2048,
+            # base_url=os.environ.get('BASE_URL', ''),
+            # api_key=os.environ.get('OPENAI_API_KEY', '')
         )
     elif model_name == "deepseekr1":
         return ChatOpenAI(
@@ -119,6 +139,8 @@ def create_llm(model_name: str):
             base_url="https://api.deepseek.com/v1",
             temperature=0.7,
             max_tokens=2048,
+            # base_url=os.environ.get('BASE_URL', ''),
+            # api_key=os.environ.get('OPENAI_API_KEY', '')
         )
     elif model_name in ["qwen2.5-coder", "mixtral", "llama3"]: # for the open source models
         # get the right model id from the model_name

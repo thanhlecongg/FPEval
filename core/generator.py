@@ -1,19 +1,19 @@
-from .state import State
+from state import State
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, END
 from langchain_core.runnables import RunnableConfig
-from .assistants import CodingAssistant, CodeRepairAssistant, TestOutputPredictionAssistant, CodeExecutionAssistant
+from assistants import CodingAssistant, CodeRepairAssistant, TestOutputPredictionAssistant, CodeExecutionAssistant
 from langchain_core.messages import system, human, ai
-from .utils import save_workflow_to_image, _print_event
+from utils import save_workflow_to_image, _print_event
 import json
 import os
 import torch
 import gc
 import shutil
-from .executor import HaskellExecutor, OcamlExecutor, ScalaExecutor, JavaExecutor
+from executor import HaskellExecutor, OcamlExecutor, ScalaExecutor, JavaExecutor
 
 # Do not remove this line, it is required for setting up the environment
-from .config import *
+from config import *
 
 
 _TMP_DIR = "tmp"
