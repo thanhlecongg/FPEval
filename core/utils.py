@@ -1,6 +1,6 @@
 from langchain_core.messages.base import BaseMessage
 from langchain_core.messages.human import HumanMessage
-from .state import State
+from state import State
 import psutil
 import subprocess
 

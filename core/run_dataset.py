@@ -2,7 +2,7 @@ import argparse
 import uuid
 import os
 import json
-from core.generator import CodeGenerator
+from generator import CodeGenerator
 import urllib3
 from huggingface_hub import HfApi, login, snapshot_download
 from basic_self_repair import main as start_repairing
@@ -11,7 +11,7 @@ from basic_self_repair import main as start_repairing
 http = urllib3.PoolManager(timeout=30.0)  
 
 # Keep the base directory consistent
-TARGET_ROOT_DIR = "/scratch/punim1928/NA"
+TARGET_ROOT_DIR = "/workspace/dataset"
 
 def process_repo(repo_id, target_dir):
     print(f"Downloading dataset from {repo_id} to {target_dir}...")
@@ -44,6 +44,7 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
 
     if not args.no_download:
+        print(f"Downloading dataset from {args.repo_id} to {TARGET_ROOT_DIR}...")
         dataset_path = process_repo(args.repo_id, TARGET_ROOT_DIR)
     else:
         dataset_path = os.path.join(TARGET_ROOT_DIR, "dataset")
