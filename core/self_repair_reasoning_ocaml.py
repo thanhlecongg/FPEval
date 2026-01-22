@@ -5,6 +5,7 @@ import pickle as pkl
 from pathlib import Path
 from langchain.prompts import ChatPromptTemplate
 from langchain.chat_models import ChatOpenAI
+from config import logger
 
 warning_fix_map = {
     "Type error": "Check type annotations and ensure expressions match expected types. For example, if a function expects an int but receives a string, convert or adjust the type.",
@@ -113,7 +114,7 @@ def main():
         all_errors = json.load(f)
     errors_map = {item["file_name"]: item["error"] for item in all_errors}
     warnings_map = {item["file"]: item["error"] for item in all_warnings}
-    print(warnings_map)
+    logger.debug(f"Warnings map: {warnings_map}")
 
     input_folder = Path("/data/scratch/projects/punim1928/NA/llms_results")
     langs = ['ocaml']
@@ -128,7 +129,7 @@ def main():
 
             for file_name in sorted(os.listdir(problem_path)):
                 if os.path.exists(f"{output_folder}/{file_name}"):
-                    print(f"Continue exist {file_name}")
+                    logger.info(f"Continue exist {file_name}")
                     continue
                 clean_file_name = file_name.replace("-", "_")
                 input_path = input_folder / lang / model_name / clean_file_name
@@ -139,17 +140,17 @@ def main():
                     with open(result_path) as f:
                         result = json.load(f)
                 except Exception as e:
-                    print(f"Error reading test data for {file_name}: {e}")
+                    logger.error(f"Error reading test data for {file_name}: {e}")
                     continue        
                 results_test = [d["Result"] for d in result if isinstance(d.get("Result", []), list)]
                 classification = classify_test_results(results_test)
-                print(classification)
+                logger.debug(f"Classification: {classification}")
                 if classification in ['compile_error']:
                     error = [d["Result"] for d in result if isinstance(d.get("Result", []), list)][:1]
                 else:
                     error = classification
                 if not input_path.exists():
-                    print(f"File not found: {input_path}")
+                    logger.warning(f"File not found: {input_path}")
                     continue
 
                 with open(input_path, "r", encoding="utf-8") as f:
@@ -159,13 +160,13 @@ def main():
                 response = msg[1].get("response", "").split("###")
 
                 if len(response) < 4:
-                    print(f"Skipping {file_name}: malformed response sections.")
+                    logger.warning(f"Skipping {file_name}: malformed response sections.")
                     continue
 
                 description = "###" + response[1]
                 curr_code = data.get("code_traces", [""])[0]
                 if curr_code == "":
-                    print(f"Skipping {file_name} as no code is available.")
+                    logger.warning(f"Skipping {file_name} as no code is available.")
                     continue
                 template = "###" + response[2]
                 answer = "###" + response[3]
@@ -175,7 +176,7 @@ def main():
                 file_warnings = warnings_map.get(clean_file_name, [])
                 file_errors = errors_map.get(clean_file_name, "Unknown error")
 
-                print(f"Processing {file_name} with {len(file_warnings)} warnings.")
+                logger.info(f"Processing {file_name} with {len(file_warnings)} warnings.")
                 quality_issues = get_warning_fixes(file_warnings)
                 error_issues = get_warning_fixes([file_errors])
                 all_issues = quality_issues + "\n" + error_issues
@@ -210,11 +211,11 @@ def main():
                 }
 
                 output_path = output_folder / clean_file_name
-                print(repaired_data)
+                logger.debug(f"Repaired data: {repaired_data}")
                 with open(output_path, "w", encoding="utf-8") as f:
                     json.dump(repaired_data, f, ensure_ascii=False, indent=4)
 
-                print(f"Repaired code saved for {model_name} -> {output_path}")
+                logger.info(f"Repaired code saved for {model_name} -> {output_path}")
 
 
 if __name__ == "__main__":

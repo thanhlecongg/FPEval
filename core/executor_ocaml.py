@@ -14,6 +14,7 @@ sys.path.append(os.path.abspath('/data/scratch/projects/punim1928/NA/LLM4Functio
 
 ####### OCAML EXECUTOR ############
 from core.executor import OcamlExecutor
+from config import logger
 executor = OcamlExecutor()
 
 def create_ocaml_env_copy():
@@ -35,7 +36,7 @@ def run_single_ocaml_test(env_dir:str,test_code: str, ocaml_code: str):
         output = executor.execute(env_dir)
         return output
     except Exception as e:
-        print(e)
+        logger.error(f"Error in run_single_ocaml_test: {e}")
         raise e
 
 

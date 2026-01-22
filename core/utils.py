@@ -3,6 +3,7 @@ from langchain_core.messages.human import HumanMessage
 from state import State
 import psutil
 import subprocess
+from config import logger
 
 
 def save_workflow_to_image(workflow, filename: str):
@@ -20,9 +21,9 @@ def save_workflow_to_image(workflow, filename: str):
         with open(filename, "wb") as f:
             f.write(image_data)
 
-        print(f"Image saved successfully as {filename}")
+        logger.info(f"Image saved successfully as {filename}")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
 
 
 def _print_event(event: dict, _printed: set, max_length=1500):
@@ -43,7 +44,7 @@ def _print_event(event: dict, _printed: set, max_length=1500):
             msg_repr = message.pretty_repr(html=True)
             if len(msg_repr) > max_length:
                 msg_repr = msg_repr[:max_length] + " ... (truncated)"
-            print(msg_repr)
+            logger.debug(msg_repr)
             _printed.add(message.id)
 
     curr_code = event.get("curr_code")
@@ -52,16 +53,16 @@ def _print_event(event: dict, _printed: set, max_length=1500):
     if curr_status:
         status_id = f"status_{n_iters}"
         if status_id not in _printed:
-            print(f"\n@@@@ Validation Status - Iter {n_iters} @@@@")
-            print(curr_status)
-            print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+            logger.info(f"\n@@@@ Validation Status - Iter {n_iters} @@@@")
+            logger.info(curr_status)
+            logger.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
             _printed.add(status_id)
             
     if curr_code:
         code_id = f"code_{n_iters}"
         if code_id not in _printed:
-            print(f"@@@ Extracted Code - Iter {n_iters} @@@@")
-            print(curr_code)
+            logger.info(f"@@@ Extracted Code - Iter {n_iters} @@@@")
+            logger.info(curr_code)
             _printed.add(code_id)
 
 def update_messages(state: State, new_message: BaseMessage) -> State:
@@ -116,11 +117,10 @@ def execute_command(command, timeout=None):
                                    stderr=subprocess.PIPE)
         try:
             output, error = process.communicate(timeout=timeout)
-            print("1")
-            print(output)
-            print(error)
+            logger.debug(f"Command output: {output}")
+            logger.debug(f"Command error: {error}")
         except subprocess.TimeoutExpired:
-            print("XXXXXXX")
+            logger.warning("Command execution timed out")
             kill_process_tree(process.pid)
             return "Timeout"
 
@@ -129,8 +129,7 @@ def execute_command(command, timeout=None):
             final_output += output.decode("utf-8")
         if error:
             final_output += error.decode("utf-8")
-        print("2")
-        print(output)
+        logger.debug(f"Final output: {output}")
         return final_output
 
     except subprocess.CalledProcessError as e:

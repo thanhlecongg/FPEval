@@ -11,6 +11,7 @@ sys.set_int_max_str_digits(5000)  # Tăng lên đủ lớn hơn số chữ số 
 
 sys.path.append(os.path.abspath('/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming'))
 import subprocess
+from config import logger
 
 def execute_command(command, timeout=60):
     try:

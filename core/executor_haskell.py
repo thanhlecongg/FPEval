@@ -14,6 +14,7 @@ sys.path.append(os.path.abspath('/data/scratch/projects/punim1928/NA/LLM4Functio
 
 ####### HASKELL EXECUTOR ############
 from core.executor import HaskellExecutor
+from config import logger
 executor = HaskellExecutor()
 
 def create_haskell_env_copy():
@@ -46,7 +47,7 @@ def run_single_haskell_test(env_dir:str,test_code: str, haskell_code: str):
         output = executor.execute(env_dir)
         return output
     except Exception as e:
-        print(e)
+        logger.error(f"Error in run_single_haskell_test: {e}")
         raise e
 
 

@@ -5,6 +5,7 @@ import pickle as pkl
 from pathlib import Path
 from langchain.prompts import ChatPromptTemplate
 from langchain.chat_models import ChatOpenAI
+from config import logger
 warning_fix_map = {
     "If block needs braces": "Always wrap `if` blocks with braces `{}` for clarity and to avoid ambiguity.",
     "Avoid using return": "Do not use `return`; rely on expression values instead.",
@@ -108,7 +109,7 @@ def main():
     with open(warnings_path, "r") as f:
         all_warnings = json.load(f)
     warnings_map = {item["file"]: item["warnings"] for item in all_warnings}
-    print(warnings_map)
+    logger.debug(f"Warnings map: {warnings_map}")
 
     # input_folder = Path("/data/scratch/projects/punim1928/NA/llms_results")
     langs = ['scala']
@@ -125,7 +126,7 @@ def main():
                 
                 clean_file_name = file_name.replace("-", "_")
                 if os.path.exists(f"{output_folder}/{clean_file_name}"):
-                    print(f"Continue exist {file_name}")
+                    logger.info(f"Continue exist {file_name}")
                     continue
                 input_path = input_folder / lang / model_name / clean_file_name
                 result_path = results_folder / file_name
@@ -135,17 +136,17 @@ def main():
                     with open(result_path) as f:
                         result = json.load(f)
                 except Exception as e:
-                    print(f"Error reading test data for {file_name}: {e}")
+                    logger.error(f"Error reading test data for {file_name}: {e}")
                     continue        
                 results_test = [d["Result"] for d in result if isinstance(d.get("Result", []), list)]
                 classification = classify_test_results(results_test)
-                print(classification)
+                logger.debug(f"Classification: {classification}")
                 if classification in ['compile_error']:
                     error = [d["Result"] for d in result if isinstance(d.get("Result", []), list)][:1]
                 else:
                     error = classification
                 if not input_path.exists():
-                    print(f"File not found: {input_path}")
+                    logger.warning(f"File not found: {input_path}")
                     continue
 
                 with open(input_path, "r", encoding="utf-8") as f:
@@ -155,19 +156,19 @@ def main():
                 response = msg[1].get("response", "").split("###")
 
                 if len(response) < 4:
-                    print(f"Skipping {file_name}: malformed response sections.")
+                    logger.warning(f"Skipping {file_name}: malformed response sections.")
                     continue
 
                 description = "###" + response[1]
                 curr_code = data.get("code_traces", [""])[0]
                 if curr_code == "":
-                    print(f"Skipping {file_name} as no code is available.")
+                    logger.warning(f"Skipping {file_name} as no code is available.")
                     continue
                 template = "###" + response[2]
                 answer = "###" + response[3]
 
                 file_warnings = warnings_map.get(clean_file_name, [])
-                print(f"Processing {file_name} with {len(file_warnings)} warnings.")
+                logger.info(f"Processing {file_name} with {len(file_warnings)} warnings.")
                 quality_issues = get_warning_fixes(file_warnings)
 
                 fixed_code, ai_response, response_metadata, system_content, human_content = assistant.repair_code(
@@ -200,11 +201,11 @@ def main():
                 }
 
                 output_path = output_folder / clean_file_name
-                print(repaired_data)
+                logger.debug(f"Repaired data: {repaired_data}")
                 with open(output_path, "w", encoding="utf-8") as f:
                     json.dump(repaired_data, f, ensure_ascii=False, indent=4)
 
-                print(f"Repaired code saved for {model_name} -> {output_path}")
+                logger.info(f"Repaired code saved for {model_name} -> {output_path}")
 
 
 if __name__ == "__main__":
