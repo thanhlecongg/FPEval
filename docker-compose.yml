@@ -2,11 +2,11 @@ version: "3.9"
 
 services:
   fpeval:
-    container_name: fpeval
+    container_name: fpeval-erlang
     build:
       context: .
       dockerfile: Dockerfile
-    image: baoloc2102/fpeval:v1
+    image: erlang123/llm4fp:v4 #baoloc2102/fpeval:v1
     platform: linux/amd64
     # Request all available GPUs (requires Docker with NVIDIA support)
     gpus: all

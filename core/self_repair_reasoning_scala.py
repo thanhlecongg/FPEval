@@ -96,7 +96,8 @@ class CodeRepairAssistant:
         code_blocks = re.findall(r"```(?:\w+)?\n(.*?)```", text, flags=re.DOTALL)
         return code_blocks[0].strip() if code_blocks else text.strip()
 
-problem_path =  '/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/remain1'
+# problem_path =  '/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/remain1'
+problem_path = "/workspace/dataset"
 def main():
     # sub_dataset_path = Path("/data/scratch/projects/punim1928/NA/RQ3/sampled_100_files.pkl")
     # with open(sub_dataset_path, "rb") as f:
@@ -109,7 +110,7 @@ def main():
     warnings_map = {item["file"]: item["warnings"] for item in all_warnings}
     print(warnings_map)
 
-    input_folder = Path("/data/scratch/projects/punim1928/NA/llms_results")
+    # input_folder = Path("/data/scratch/projects/punim1928/NA/llms_results")
     langs = ['scala']
     models = ["gpt-3.5-turbo"]
     results_folder =   Path("/scratch/punim1928/NA/results/scala/gpt3.5")

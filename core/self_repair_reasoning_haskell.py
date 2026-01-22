@@ -125,7 +125,7 @@ def main():
     
     # input_folder = Path("/data/scratch/projects/punim1928/NA/llms_results")
     #path for gpt5
-    input_folder = Path("/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/output")
+    # input_folder = Path("/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/output")
     langs = ['haskell']
     models = ["gpt-5"]
     results_folder =   Path("/data/scratch/projects/punim1928/NA/results/haskell/gpt5")

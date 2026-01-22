@@ -56,16 +56,16 @@ class CodeGenerator():
             return NotImplementedError(f"Workflow {workflow} not implemented")
 
         if self.language == "haskell":
-            self.executable_dir = "envs/haskell"
+            self.executable_dir = "/workspace/envs/haskell"
             self.executor = HaskellExecutor(timeout_limit)
         elif self.language == "ocaml":
-            self.executable_dir = "envs/ocaml"
+            self.executable_dir = "/workspace/envs/ocaml"
             self.executor = OcamlExecutor(timeout_limit)
         elif self.language == "scala":
-            self.executable_dir = "envs/scala"
+            self.executable_dir = "/workspace/envs/scala"
             self.executor = ScalaExecutor(timeout_limit)
         elif self.language == "java":
-            self.executable_dir = "envs/java"
+            self.executable_dir = "/workspace/envs/java"
             self.executor = JavaExecutor(timeout_limit)
         else:
             raise NotImplementedError(

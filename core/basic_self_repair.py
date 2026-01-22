@@ -5,26 +5,30 @@ import pickle as pkl
 from pathlib import Path
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-
+from assistants import create_llm, test_llm_connection
 class CodeRepairAssistant:
     def __init__(self, model_name, lang):
         self.lang = lang
         self.model_name = model_name
-        if self.model_name == "gpt-5":
-            self.llm = ChatOpenAI(
-                model="gpt-5.1",
-                temperature=1,
-                model_kwargs={
-                "reasoning_effort": "none" 
-            },
-                max_tokens=2048,
-            )
-        else:
-            self.llm = ChatOpenAI(
-                model=model_name,
-                temperature=0.7,
-                max_tokens=2048,
-            )
+        # if self.model_name == "gpt-5":
+        #     self.llm = ChatOpenAI(
+        #         model="gpt-5.1",
+        #         temperature=1,
+        #         model_kwargs={
+        #         "reasoning_effort": "none" 
+        #     },
+        #         max_tokens=2048,
+        #     )
+        # else:
+        #     self.llm = ChatOpenAI(
+        #         model=model_name,
+        #         temperature=0.7,
+        #         max_tokens=2048,
+        #     )
+        self.llm = create_llm(model_name)
+    
+        if not test_llm_connection(model_name):
+            raise ValueError(f"LLM connection FAILED for model '{self.llm.model_name}'")
         self.prompt_template = ChatPromptTemplate.from_messages([
             (
                 "system",
@@ -58,14 +62,18 @@ class CodeRepairAssistant:
         code_blocks = re.findall(r"```(?:\w+)?\n(.*?)```", text, flags=re.DOTALL)
         return code_blocks[0].strip() if code_blocks else text.strip()
 
-problem_path =  '/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/remain1'
-def main(langs=None, models=None):
-    input_folder = Path("/data/scratch/projects/punim1928/NA/llms_results")
+# problem_path =  '/workspace/dataset'
+def main(problem_path=None, input_folder=None, output_folder=None, langs=None, models=None):
+    if problem_path is None: problem_path = Path("/workspace/dataset")
+    if input_folder is None: input_folder = Path("/workspace/output")
+    if output_folder is None: output_folder = Path("/workspace/output_repaired")
     if langs is None: langs = ['haskell']
     if models is None: models = ["gpt-3.5-turbo"]
+    print(f"Input folder: {input_folder}")
+    print(f"Output folder: {output_folder}")
     for lang in langs:
         for model_name in models:
-            output_folder = Path("/data/scratch/projects/punim1928/NA/RQ3/result_llms") / lang / model_name
+            output_folder = Path(os.path.join(output_folder,lang,model_name))
             output_folder.mkdir(parents=True, exist_ok=True)
 
             assistant = CodeRepairAssistant(model_name=model_name, lang=lang)
@@ -74,8 +82,8 @@ def main(langs=None, models=None):
                 if os.path.exists(f"{output_folder}/{file_name}"):
                     print(f"Continue exist {file_name}")
                     continue
-                clean_file_name = file_name.replace("-", "_")
-                input_path = input_folder / lang / model_name / clean_file_name
+                clean_file_name = file_name.replace("-", "_") + ".json"
+                input_path = Path(os.path.join(input_folder,lang,model_name,clean_file_name))
 
                 if not input_path.exists():
                     print(f"File not found: {input_path}")
