@@ -8,10 +8,22 @@ from huggingface_hub import HfApi, login, snapshot_download
 from basic_self_repair import main as start_repairing
 
 # Increase timeout for potential large downloads/uploads
-http = urllib3.PoolManager(timeout=30.0)  
+http = urllib3.PoolManager(timeout=30.0)
 
 # Keep the base directory consistent
-TARGET_ROOT_DIR = "/workspace/dataset"
+TARGET_ROOT_DIR = "/workspace/"
+
+def hf_login_from_env():
+    """Login to Hugging Face Hub using HF_TOKEN from environment if available."""
+    hf_token = os.environ.get("HF_TOKEN")
+    if hf_token:
+        try:
+            login(token=hf_token)
+            print("Logged into Hugging Face Hub using HF_TOKEN.")
+        except Exception as e:
+            print(f"Warning: failed to login to Hugging Face Hub: {e}")
+    else:
+        print("HF_TOKEN not found in environment; proceeding without Hugging Face login.")
 
 def process_repo(repo_id, target_dir):
     print(f"Downloading dataset from {repo_id} to {target_dir}...")
@@ -19,7 +31,7 @@ def process_repo(repo_id, target_dir):
     # This downloads the 'dataset' folder from the repo into {target_dir}/dataset
     downloaded_path = snapshot_download(
         repo_id=repo_id, 
-        allow_patterns=["dataset/*"], 
+        # allow_patterns=["dataset/*"], 
         local_dir=target_dir,
         repo_type="dataset"
     )
@@ -39,15 +51,19 @@ def main():
     
     args = parser.parse_args()
 
+    # Login to Hugging Face using HF_TOKEN from environment (if set)
+    hf_login_from_env()
+
     # Create the specific output subdirectory early to simplify processing
     output_dir = os.path.join(args.output_path, args.language, args.model_name)
+    print(f"Output directory: {output_dir}")
     os.makedirs(output_dir, exist_ok=True)
 
     if not args.no_download:
         print(f"Downloading dataset from {args.repo_id} to {TARGET_ROOT_DIR}...")
         dataset_path = process_repo(args.repo_id, TARGET_ROOT_DIR)
     else:
-        dataset_path = os.path.join(TARGET_ROOT_DIR, "dataset")
+        dataset_path = os.path.join(TARGET_ROOT_DIR, "dataset/LeetCodeProblemDemo")
         
     if not os.path.exists(dataset_path):
         print(f"Error: Dataset path does not exist: {dataset_path}")
@@ -103,7 +119,14 @@ def main():
                 print(f"Exception with file {file_name}: {str(e)}")
                 with open("error_log.txt", "a") as f:
                     f.write(f"{file_name}: {str(e)}\n")
-
+    
+    start_repairing(
+        problem_path=dataset_path,
+        input_folder=f'{args.output_path}',
+        output_folder=None,
+        langs=[args.language], 
+        models=[args.model_name]
+    )
 if __name__ == "__main__":
     main()
-    start_repairing()
+    

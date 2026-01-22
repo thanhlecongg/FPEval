@@ -160,3 +160,9 @@ cython_debug/
 **/__pycache__/
 *.pyc
 *.pyo
+envs/
+core/error_log.txt
+core/tmp/
+dataset/
+output/
+output_repaired/

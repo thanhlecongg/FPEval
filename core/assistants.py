@@ -40,6 +40,36 @@ def get_code_from_response(response: str, language: str) -> str:
     
     return ''.join(code_blocks)
 
+
+def test_llm_connection(model_name: str = "gpt-5") -> bool:
+    """
+    Quickly test whether the configured LLM can be instantiated and respond to a
+    trivial prompt.
+
+    Returns:
+        bool: True if the model responds without raising an exception, False otherwise.
+    """
+    
+    try:
+        if model_name is type(ChatOpenAI):
+            llm = model_name
+        else:
+            llm = create_llm(model_name)
+        messages = [
+            (
+                "system",
+                "You are a helpful assistant that translates English to French. Translate the user sentence.",
+            ),
+            ("human", "I love programming."),
+        ]
+        ai_msg = llm.invoke(messages)
+        print(ai_msg)
+        print(f"LLM connection OK for model '{model_name}'.")
+        return True
+    except Exception as e:
+        print(f"LLM connection FAILED for model '{model_name}': {e}")
+        return False
+
 def create_llm(model_name: str):
     if model_name == "gpt-5":
         print("Using gpt-5")
@@ -66,6 +96,15 @@ def create_llm(model_name: str):
         print("Using gpt-4o")
         return ChatOpenAI(
             model="gpt-4o",
+            temperature=0.7,
+            max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY', '')
+        )
+    elif model_name == "gpt-4o-mini" or model_name=='openai/gpt-4o-mini':
+        print("Using gpt-4o")
+        return ChatOpenAI(
+            model=model_name,
             temperature=0.7,
             max_tokens=2048,
             base_url=os.environ.get('BASE_URL', ''),
@@ -309,7 +348,10 @@ class CodingAssistant(Assistant):
             "### FORMAT: You will use the following starter code to write the solution to the problem and enclose your code within delimiters.\n{template}\n"
             "### ANSWER: (use the provided format with backticks)\n"),
         ])
-
+        if not self.test_connection():
+            raise ValueError(f"LLM connection FAILED for model '{self.llm.model_name}'")
+    def test_connection(self):
+        return test_llm_connection(self.llm.model_name)
     def __call__(self,
                  state: State,
                  config: RunnableConfig = None,
