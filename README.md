@@ -45,7 +45,7 @@ Make sure to use correct environment before getting started.
 ---
 
 ## Dataset
-The dataset is available at [HuggingFace](https://huggingface.co/LLMFP).
+The dataset is available at [HuggingFace](https://huggingface.co/FPEvalRepoPublic).
 
 ## Installation
 
