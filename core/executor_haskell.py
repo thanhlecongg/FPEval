@@ -8,17 +8,26 @@ import subprocess
 import tempfile
 import sys
 import pickle
-sys.set_int_max_str_digits(5000) # Increase the limit for integer string conversion
+from zipp import Path
+import gc
 
-sys.path.append(os.path.abspath('/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming'))
+sys.set_int_max_str_digits(5000) # Increase the limit for integer string conversion
+def get_project_root():
+    return Path(__file__).resolve().parents[1]
+    #[0] core
+    #[1] FPEval
+project_root = get_project_root()
+output_dir = f"{project_root}/results_llm_reasoning/haskell/gpt4"
+private_testcase_path =  f"{project_root}/PrivateTestCase"
 
 ####### HASKELL EXECUTOR ############
 from core.executor import HaskellExecutor
 executor = HaskellExecutor()
 
 def create_haskell_env_copy():
-    base_env_path = "/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/envs/haskell"
-    temp_env_dir = f"/data/scratch/projects/punim1928/NA/tmp/haskell_env_{uuid.uuid4().hex[:8]}"
+    base_env_path = f"{project_root}/envs/haskell"
+    temp_env_dir = f"{project_root}/tmp/haskell_env_{uuid.uuid4().hex[:8]}"
+    temp_env_dir.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(base_env_path, temp_env_dir)
 
     #Path to the cabal file after copying
@@ -49,16 +58,9 @@ def run_single_haskell_test(env_dir:str,test_code: str, haskell_code: str):
         print(e)
         raise e
 
-
-# def run_haskell_testcase(test_code: str, source_file: str):
-#     env_dir = create_haskell_env_copy()
-#     main_file = os.path.join(env_dir, "app", "Main.hs")
-#     executor.apply_code(test_code, main_file)
-#     return executor.execute(env_dir)
-
 ###### CREAT HASKELL TEST FILE ###########
 def extract_types_from_docstring(docstring):
-    """Trích xuất kiểu dữ liệu từ docstring, bao gồm cả danh sách."""
+    """Extract types from docstring, including lists."""
     type_pattern = r":type (\w+): ([\w\[\], ]+)"
     return_pattern = r":rtype: ([\w\[\], ]+)"
 
@@ -69,7 +71,7 @@ def extract_types_from_docstring(docstring):
     return_type = return_type_match.group(1) if return_type_match else "Unknown"
     return param_dict, return_type
 def python_type_to_haskell(python_type):
-    """Chuyển kiểu dữ liệu Python sang Haskell, bao gồm cả danh sách lồng nhau."""
+    """Convert Python data types to Haskell, including nested lists."""
     type_mapping = {
         "int": "Int",
         "float": "Float",
@@ -88,8 +90,7 @@ def python_type_to_haskell(python_type):
 
 
 def extract_haskell_signature(python_template):
-    """Chuyển đổi chữ ký hàm Python sang Haskell."""
-    # Lấy tên hàm
+    """Convert Python function signature to Haskell"""
     function_match = re.search(r"def (\w+)\(", python_template)
     if not function_match:
         return None, None
@@ -131,17 +132,8 @@ print(sig)
 print(fn)
 print(params)
 
-#############################
-with open('/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/leetcode_updated.json', 'r') as f:
-    data = json.load(f) 
 
 ####################################
-import os
-import json
-import re
-
-import subprocess
-import gc
 
 
 base_type_mappings = {
@@ -205,8 +197,6 @@ def generate_public_haskell_test_file(question_title, func_name, case, python_te
         try:
             test_input_var = " ".join(inp for inp in input_var).strip()
         except:
-           
-            del_file.append(question_title)
             return
         test_input_var = re.sub(r'(^|[\s\[,])-\s*(\d+)', r'\1(-\2)', test_input_var)
 
@@ -279,8 +269,6 @@ def generate_private_haskell_test_file(problem_name, func_name, case, python_tem
         test_input_var = " ".join(inp for inp in input_var).strip()
 
     except Exception as e:
-        print("error:", e)  # Log the error for debugging
-        del_file.append(problem_name)
         return
     
     test_input_var = re.sub(r'(^|[\s\[,])-\s*(\d+)', r'\1(-\2)', test_input_var)
@@ -342,17 +330,15 @@ def check_haskell_syntax_and_types(path:str,code: str) -> bool:
     
 
 ######### MAIN FUNCTION TO SAVE FILES ##############
-output_dir = "/scratch/punim1928/NA/results_llm_reasoning/haskell/gpt4"
-problem_path = '/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/remain2'
+
 os.makedirs(output_dir, exist_ok=True)
 def read_file(filename):
     try:
+        meta_path = f"{project_root}/LeetCodeMeta/{filename}"
+        private_path = f"{private_testcase_path}/{filename}"
+        filename = filename.replace('-','_')
+        llms_path = f"{project_root}/output/haskell/gpt-5/{filename}"
     
-        private_path = f"{problem_path}/{filename}"
-        meta_path = f'/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/split_by_name/{filename}'
-        llm = filename.replace('-','_')
-        llms_path = f'/data/scratch/projects/punim1928/NA/RQ3/result_llms_reasoning/haskell/gpt-4o/{llm}'
-        
         with open(meta_path, 'r', encoding='utf-8') as f:
             row = json.load(f)
            
@@ -384,10 +370,7 @@ def read_file(filename):
     except:
         return None, None, None, None
 common_files = []
-def save_haskell_files(problem_path, error_log_file="error.txt"):
-    del_file = ['count_the_number_of_inversions.json','']
-    err = []
-    
+def save_haskell_files(problem_path):
     i = 0
     env_dir = create_haskell_env_copy()
     for filename in sorted(os.listdir(problem_path)):
@@ -401,17 +384,12 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
             problem_name = filename.replace(".json","")
             row, private_row, test_code,meta_path = read_file(filename)
             if row == None:
-                print("Continue NOne " + filename)
                 continue
             if not os.path.exists(meta_path):
-                del_file.append(problem_name)
-                print("do not have file " + problem_name)
                 continue
             try:
                 metadata = row['metadata']
             except:
-                    print(f"skip {question_title} because metadata is None")
-                    del_file.append(row['name'])
                     continue
             func_name = metadata['func_name']
         
@@ -424,18 +402,14 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
             elif isinstance(public_test_cases, list):
                 public_cases = public_test_cases  # Directly use list
             else:
-                del_file.append(filename)
-                print(f"⚠️ Bỏ qua {question_title}: public_test_cases không hợp lệ ({type(public_test_cases)})")
                 continue
             count = 0
-            print("This is public")
             for case in public_cases:
                 count+=1
               
                 haskell_code = generate_public_haskell_test_file(question_title, func_name, case, python_template,0)
                 haskell_syntax = generate_public_haskell_test_file(question_title, func_name, case, python_template,1)
                 if haskell_syntax == None:
-                    err.append("Syntaxx == none")
                     break
                 if check_haskell_syntax_and_types(env_dir, haskell_syntax):
                     print(" True Syntax")
@@ -445,7 +419,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                     "Test_num": count,
                     "Result": result})
                     except:
-                        err.append("Output err")
                         continue
                 else:
                         result = run_single_haskell_test(env_dir, test_code, haskell_code)
@@ -453,7 +426,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                     "Test_num": count,
                     "Result": result})
                         print("False Syntax")
-                        err.append("Syntax error")
                         break
             if result[0] == -1 and result[1] == -1 and result[2] == -1:
                     print("\n\n Error llms message ")
@@ -471,7 +443,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                
                 haskell_syntax = generate_private_haskell_test_file(question_title, func_name, private, python_template,1)
                 if haskell_syntax == None:
-                    err.append("Syntaxx == none")
                     break
                 if check_haskell_syntax_and_types(env_dir, haskell_syntax):
                     print("True Syntax")
@@ -482,7 +453,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                     "Test_num": count,
                     "Result": result})
                     except:
-                        err.append("Output err")
                         continue
                 else:
                         result = run_single_haskell_test(env_dir, test_code, haskell_code)
@@ -490,7 +460,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                     "Test_num": count,
                     "Result": result})
                         print("False Syntax")
-                        err.append("Syntax error")
                         break
             
                 if result[0] == -2 and result[1] == -1 and result[2] == -1:
@@ -513,6 +482,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
     
 
 
-save_haskell_files(problem_path)
+save_haskell_files(private_testcase_path)
 
 print("Done!")  

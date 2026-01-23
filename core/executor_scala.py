@@ -7,9 +7,18 @@ import uuid
 import subprocess
 import tempfile
 import sys
-sys.set_int_max_str_digits(5000)  # Tăng lên đủ lớn hơn số chữ số bạn cần
+from pathlib import Path
+import gc
 
-sys.path.append(os.path.abspath('/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming'))
+def get_project_root():
+    return Path(__file__).resolve().parents[1]
+    #[0] core
+    #[1] FPEval
+project_root = get_project_root()
+output_dir = f"{project_root}/llms_results/scala/gpt5"
+private_testcase_path =  f"{project_root}/PrivateTestCase"
+
+sys.set_int_max_str_digits(5000) 
 import subprocess
 
 def execute_command(command, timeout=60):
@@ -32,8 +41,9 @@ executor = ScalaExecutor()
 
 def create_scala_env_copy():
 
-    base_env_path = "/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/envs/scala"
-    temp_env_dir = f"/data/scratch/projects/punim1928/NA/tmp_4o/scala_env_{uuid.uuid4().hex[:8]}"  # hoặc bạn có thể dùng /workspace/tmp_test
+    base_env_path = f"{project_root}/envs/scala"
+    temp_env_dir = f"{project_root}/tmp/scala_env_{uuid.uuid4().hex[:8]}"  
+    temp_env_dir.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(base_env_path, temp_env_dir)
     return temp_env_dir
 
@@ -47,8 +57,6 @@ def main_code(scala_code: str):
 
         with open(main_file_path, "r") as f:
             content = f.read()
-
-        # Nếu dòng đầu chưa có package
         if not content.startswith("package "):
             content = "package scala\n\n" + content
             with open(main_file_path, "w") as f:
@@ -56,8 +64,6 @@ def main_code(scala_code: str):
 
         executor = ScalaExecutor()
         executor.apply_code(scala_code, main_file_path)
-
-        # ✅ Thêm bước compile
         curr_dir = os.getcwd()
         os.chdir(env_dir)
 
@@ -84,18 +90,13 @@ def main_code(scala_code: str):
 
 def run_single_scala_test(env_dir: str, test_code: str):
     test_file_path = os.path.join(env_dir, "src/test/scala/MySuite.scala")
-    
-    # Ghi code chính
-    
     try:
-        # Ghi code test
         test_code_with_package = "package scala\n\n" + test_code
 
         with open(test_file_path, "w") as f:
             f.write(test_code_with_package)
         executor = ScalaExecutor()
         output = executor.execute(env_dir)
-        print("Raw output: "+ str(output))
         return output
     finally:
         if os.path.exists(env_dir):
@@ -103,15 +104,10 @@ def run_single_scala_test(env_dir: str, test_code: str):
         
 
 
-# def run_scala_testcase(test_code: str, source_file: str):
-#     env_dir = create_scala_env_copy()
-#     main_file = os.path.join(env_dir, "app", "Main.hs")
-#     executor.apply_code(test_code, main_file)
-#     return executor.execute(env_dir)
 
-###### CREAT HASKELL TEST FILE ###########
+###### CREAT SCALA TEST FILE ###########
 def extract_types_from_docstring(docstring):
-    """Trích xuất kiểu dữ liệu từ docstring, bao gồm cả danh sách."""
+    """Extract parameter and return types from a docstring."""
     type_pattern = r":type (\w+): ([\w\[\], ]+)"
     return_pattern = r":rtype: ([\w\[\], ]+)"
 
@@ -142,8 +138,7 @@ def python_type_to_scala(python_type):
 
     return parse_type(python_type)
 def extract_scala_signature(python_template):
-    """Chuyển đổi chữ ký hàm Python sang Haskell."""
-    # Lấy tên hàm
+    """Transform Python function signature to Scala"""
     function_match = re.search(r"def (\w+)\(", python_template)
     if not function_match:
         return None, None
@@ -189,18 +184,10 @@ print(params)
 print(scala_return)
 print(sig)  # maxContainers :: Int -> Int -> Int -> Int
 print(fn)   # maxContainers n w maxWeight
-import re
 
-#############################
-with open('/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/leetcode_updated.json', 'r') as f:
-    data = json.load(f) # Không phải json.loads(f.read()) hay đọc từng dòng
+
 ####################################
-import os
-import json
-import re
 
-import subprocess
-import gc
 
 
 base_type_mappings = {
@@ -215,21 +202,19 @@ base_type_mappings = {
 }
 
 def extract_value_between_params(input_str, param1, param2=None):
-    """
-    Trích xuất giá trị giữa param1 và param2 từ input_str,
-    hỗ trợ cả kiểu danh sách (List) và chuỗi có dấu "..."
-    """
+    """Extract value between param1 and param2 from input_str,
+    supporting both list and string types."""
     if param2:
-        # Bắt danh sách, chuỗi hoặc số nguyên/dấu âm
+        # Catch list, string, or number (including negative)
         pattern = rf"{param1} = (\[.*?\]|\".*?\"|\S+)(?=, {param2} = |$)"
     else:
-        # Bắt giá trị cho param1 đến cuối chuỗi nếu param2 không có
+        # Catch param1 value till end of string
         pattern = rf"{param1} = (\[.*?\]|\".*?\"|\S+)$"
 
     match = re.search(pattern, input_str)
 
     if match:
-        return match.group(1).strip()  # Loại bỏ khoảng trắng thừa
+        return match.group(1).strip() 
     return None
 
 
@@ -261,7 +246,6 @@ def generate_public_scala_test_file(question_title, func_name, case,  python_tem
         try:
             test_input = ",".join(inp for inp in input_var if inp)
         except:
-            print("error test_input")
 
             return
         test_input = change_lst(test_input)
@@ -281,15 +265,14 @@ def change_lst(lst):
     def convert_number(match):
         num = match.group(0)
         try:
-            if abs(int(num)) > 2_147_483_647:  # Nếu vượt quá Int.MaxValue
+            if abs(int(num)) > 2_147_483_647: 
                 return f"BigInt(\"{num}\")"
-            return num  # Nếu trong phạm vi Int, giữ nguyên
+            return num  
         except ValueError:
-            return num  # Nếu không phải số, giữ nguyên
+            return num 
     if lst.startswith("\""):
       return lst
     lst = lst.replace('[', "List(").replace(']', ")")
-    # Thêm "L" vào số lớn hơn Int.MaxValue hoặc nhỏ hơn Int.MinValue
     lst = re.sub(r'-?\d+', convert_number, lst)
 
     return lst
@@ -333,9 +316,7 @@ def generate_private_scala_test_file(problem_name, func_name, case, python_templ
                     input_var[i] = '"' + input_var[i] +'"' 
         test_input = ",".join(inp for inp in input_var if inp)    
     except:
-            print("error test_input")
             return
-    print(case['output'])
     test_output = " ".join(str(case['output']).strip().split("\n"))
     test_output = test_output.replace('True', "true").replace('False', "false").replace(" ", "")
 
@@ -350,43 +331,16 @@ class MySuite extends munit.FunSuite {{
 }}
 """
 
-import os
-import subprocess
-
-# def check_haskell_syntax_and_types(code: str) -> bool:
-#     base_path = "/workspace/LLM4FunctionalProgramming/envs/hs"
-#     test_file_path = os.path.join(base_path, "app", "Main2.hs")
-#     with open(test_file_path, "w") as f:
-#         f.write(code)
-
-#     try:
-#         result = subprocess.run(
-#             ["cabal", "exec", "--", "ghc", "-fno-code", "app/Main2.hs"],
-#             cwd=base_path,
-#             check=True,
-#             stdout=subprocess.PIPE,
-#             stderr=subprocess.PIPE,
-#         )
-#         return "True"
-#     except subprocess.CalledProcessError as e:
-#         error_output = e.stderr.decode().strip().splitlines()
-#         first_4_lines = "\n".join(error_output[:4])  # Lấy 4 dòng đầu
-#         return f"❌ Syntax check failed for \n{first_4_lines}\n\n"
-#     finally:
-#         if os.path.exists(test_file_path):
-#             os.remove(test_file_path)
-
 
 
 del_file = []
-output_dir = "/data/scratch/projects/punim1928/NA/llms_results/scala/gpt5"
-problem_path =  '/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/in_out_ver2'
+
 os.makedirs(output_dir, exist_ok=True)
 def read_file(filename):
-        private_path = f"{problem_path}/{filename}"
-        meta_path = f'/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/split_by_name/{filename}'
-        llm = filename.replace('-','_')
-        llms_path = f'/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/output/scala/gpt-5/{llm}'
+        meta_path = f"{project_root}/LeetCodeMeta/{filename}"
+        private_path = f"{private_testcase_path}/{filename}"
+        filename = filename.replace('-','_')
+        llms_path = f"{project_root}/output/scala/gpt-5/{filename}"
         
         with open(meta_path, 'r', encoding='utf-8') as f:
             row = json.load(f)
@@ -399,32 +353,21 @@ def read_file(filename):
 
 import pickle
 common_files = []
-# with open('/data/scratch/projects/punim1928/NA/RQ3/sampled_100_files.pkl', 'rb') as f:
-#     common_files = pickle.load(f)
-def save_haskell_files(problem_path, error_log_file="error.txt"):
+
+def save_scala_files(private_testcase_path, error_log_file="error.txt"):
     del_file = []
     err = []
     i = 0
     
-    # start = 100*index
-    # end = 100*(index+1)
-    for filename in sorted(os.listdir(problem_path)):
+    for filename in sorted(os.listdir(private_testcase_path)):
         err_compile = 0
         try:
             i+=1
-           
-        
             if os.path.exists(f"{output_dir}/{filename}"):
                 print(f"Continue {filename}")
                 continue
-            
-            # if filename != 'count-the-number-of-vowel-strings-in-range.json':
-            #     continue
            
-            print(f"🙀Processing the problem {i}th {filename}")
-            # print(i)  
-            if i>=300:
-                break
+            print(f"Processing the problem {i}th {filename}")
             
             problem_results = []
             problem_name = filename.replace(".json","")
@@ -432,21 +375,17 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                 row, private_row, scala_code,meta_path = read_file(filename)
             except:
                 del_file.append(problem_name)
-                print("do not have file " + problem_name)
                 continue
             env = main_code(scala_code)
-            if isinstance(env, list):  # tức là là lỗi dạng [-4, ...]
+            if isinstance(env, list):  
                 err_compile = 1
             if err_compile != 1:
-                print("This is env: " + str(env))
                 if not os.path.exists(meta_path):
                     del_file.append(problem_name)
-                    print("do not have file " + problem_name)
                     continue
                 try:
                     metadata = row['metadata']
                 except:
-                        print(f"skip {question_title} because metadata is None")
                         del_file.append(row['name'])
                         continue
                 func_name = metadata['func_name']
@@ -461,7 +400,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                     public_cases = public_test_cases  # Directly use list
                 else:
                     del_file.append(filename)
-                    print(f"⚠️ Bỏ qua {question_title}: public_test_cases không hợp lệ ({type(public_test_cases)})")
                     continue
                 count = 0
                 for case in public_cases:
@@ -471,7 +409,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                     
                     try:
                         result = run_single_scala_test(env, haskell_code)
-                        print("This is result:" + str(result))
                     except:
                         err.append("Output err")
                         continue
@@ -487,7 +424,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                     private = private_row[ind]
                     haskell_code = generate_private_scala_test_file(question_title,func_name,private, python_template,0)
                     try:
-                        print("ok")
                         result = run_single_scala_test(env, haskell_code)
                 
                         if result[3] == "Timeout":
@@ -504,19 +440,14 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                 if count < 10:
                     err.append(f"Numb of test {count}")
             else:
-                print('ok')
                 problem_results.append({
                             "Test_num": 1,
                             "Result": env})
             if problem_results:
                 with open(os.path.join(output_dir, f"{problem_name}.json"), "w") as f:
                     json.dump(problem_results, f, indent=2)
-            # if err:
-            #     with open(os.path.join("/home/error_scala", f"{problem_name}.json"), "w") as f:
-            #         json.dump(err, f, indent=2)
             gc.collect()
         except Exception as e:
-            print(e)
             if problem_results:
                 with open(os.path.join(output_dir, f"{problem_name}.json"), "w") as f:
                     json.dump(problem_results, f, indent=2)
@@ -527,6 +458,5 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
             continue
         
 
+save_scala_files(private_testcase_path)
 
-save_haskell_files(problem_path)
-# export PATH="/data/scratch/projects/punim1928/NA/sbt/bin:$PATH"

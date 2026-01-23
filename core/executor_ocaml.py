@@ -1,3 +1,4 @@
+from pathlib import Path
 import re
 import json
 import sys
@@ -8,17 +9,25 @@ import subprocess
 import tempfile
 import sys
 import pickle
-sys.set_int_max_str_digits(5000)  # Tăng lên đủ lớn hơn số chữ số bạn cần
+import gc
 
-sys.path.append(os.path.abspath('/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming'))
+sys.set_int_max_str_digits(5000)  
 
+def get_project_root():
+    return Path(__file__).resolve().parents[1]
+    #[0] core
+    #[1] FPEval
+project_root = get_project_root()
+output_dir = f"{project_root}/results_llm_reasoning/ocaml/gpt4"
+private_testcase_path =  f"{project_root}/PrivateTestCase"
 ####### OCAML EXECUTOR ############
 from core.executor import OcamlExecutor
 executor = OcamlExecutor()
 
 def create_ocaml_env_copy():
-    base_env_path = "/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/envs/ocaml"
-    temp_env_dir = f"/data/scratch/projects/punim1928/NA/tmp/ocaml_env_{uuid.uuid4().hex[:8]}"
+    base_env_path = f"{project_root}/envs/ocaml"
+    temp_env_dir = f"{project_root}/tmp/ocaml_env_{uuid.uuid4().hex[:8]}"
+    temp_env_dir.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(base_env_path, temp_env_dir)
     return temp_env_dir
 
@@ -39,15 +48,9 @@ def run_single_ocaml_test(env_dir:str,test_code: str, ocaml_code: str):
         raise e
 
 
-# def run_haskell_testcase(test_code: str, source_file: str):
-#     env_dir = create_haskell_env_copy()
-#     main_file = os.path.join(env_dir, "app", "Main.hs")
-#     executor.apply_code(test_code, main_file)
-#     return executor.execute(env_dir)
-
 ###### CREAT OCAML TEST FILE ###########
 def extract_types_from_docstring(docstring):
-    """Trích xuất kiểu dữ liệu từ docstring, bao gồm cả danh sách."""
+    """Extract types from docstring, including lists."""
     type_pattern = r":type (\w+): ([\w\[\], ]+)"
     return_pattern = r":rtype: ([\w\[\], ]+)"
 
@@ -80,8 +83,7 @@ def python_type_to_ocaml(python_type):
     return parse_type(python_type)
 # Function to extract function information
 def extract_ocaml_signature(python_template):
-    """Chuyển đổi chữ ký hàm Python sang Haskell."""
-    # Lấy tên hàm
+    """Extract function signature from Python template and convert to OCaml."""
     function_match = re.search(r"def (\w+)\(", python_template)
     if not function_match:
         return None, None
@@ -122,22 +124,11 @@ print(params)
 print(sig)  # maxContainers :: Int -> Int -> Int -> Int
 print(fn)
 
-#############################
-with open('/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/leetcode_updated.json', 'r') as f:
-    data = json.load(f)  # Không phải json.loads(f.read()) hay đọc từng dòng
 
 ####################################
-import os
-import json
-import re
 
-import subprocess
-import gc
 def extract_value_between_params(input_str, param1, param2=None):
-    """
-    Trích xuất giá trị giữa param1 và param2 từ input_str,
-    hỗ trợ cả kiểu danh sách (List) và chuỗi có dấu "..."
-    """
+
     if param2:
         # Bắt danh sách, chuỗi hoặc số nguyên/dấu âm
         pattern = rf"{param1} = (\[.*?\]|\".*?\"|\S+)(?=, {param2} = |$)"
@@ -181,7 +172,6 @@ def generate_public_ocaml_test_file(question_title, func_name, case, python_temp
             del_file.append(question_title)
             return
         test_input_var = re.sub(r'(^|[\s\[,])-\s*(\d+)', r'\1(-\2)', test_input_var)
-        print(f"This is test input var: {test_input_var}")
         cleaned_lines = [line.replace(',', ';') for line in test_input_var]
         test_input = "".join(cleaned_lines)
         test_input = re.sub(r'(^|\s)-(\d+)', r'\1(\g<0>)', test_input)
@@ -228,7 +218,7 @@ def is_list_of_single_item_lists(text):
 
 def generate_private_ocaml_test_file(problem_name, func_name, case, python_template, check_temp:int):
     param_types,ocaml_function,params = extract_ocaml_signature(str(python_template))  # Assuming params are returned here
-    print(param_types)
+
    
     if check_temp == 0:
         temp_function = ""
@@ -251,20 +241,16 @@ def generate_private_ocaml_test_file(problem_name, func_name, case, python_templ
             if 'int' in types:
                 input_var[i] = input_var[i].replace("\"","").replace('"','').replace("\'", "").replace("'","")
             elif "string" in types and "list" in types.lower():
-                # xử lý list<string>
                 content = input_var[i].strip()[1:-1]  # remove [ ]
                 items = [x.strip() for x in content.split(',') if x.strip()]
                 quoted_items = ['"{}"'.format(item.strip('"').strip("'")) for item in items]
                 input_var[i] = "[" + ", ".join(quoted_items) + "]"
             elif types == "string":
-                # xử lý string đơn
                 if not input_var[i].startswith('"') and not input_var[i].startswith('\\"'):
                     input_var[i] = '"' + input_var[i] + '"'
                 
         test_input_var = " ".join(inp for inp in input_var).strip()
     except Exception as e:
-        print("error:", e)  # In thông báo lỗi chi tiết
-        del_file.append(problem_name)
         return
     
     test_input_var = re.sub(r'(^|[\s\[,])-\s*(\d+)', r'\1(-\2)', test_input_var)
@@ -307,8 +293,6 @@ def check_ocaml_syntax_and_types(path: str, code: str) -> bool:
 
     if code is None:
         return False
-
-    # Ghi code vào file
     with open(test_file_path, "w") as f:
         f.write(code)
 
@@ -324,21 +308,18 @@ def check_ocaml_syntax_and_types(path: str, code: str) -> bool:
         return True
 
     except subprocess.CalledProcessError as e:
-        print("⚠️ Compilation failed with error:")
-        print(e.stderr.decode("utf-8"))  # In lỗi cụ thể
+        print("Compilation failed with error:")
+        print(e.stderr.decode("utf-8")) 
         return False
 
-del_file = []
-output_dir = "/scratch/punim1928/NA/results_llm/ocaml/gpt5_reasoning"
-problem_path = '/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/remain2'
-output_check_dir ='/scratch/punim1928/NA/results/ocaml/gpt4o'
+
 os.makedirs(output_dir, exist_ok=True)
 def read_file(filename):
     try:
-        private_path = f"{problem_path}/{filename}"
-        meta_path = f'/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/split_by_name/{filename}'
-        llm = filename.replace('-','_')
-        llms_path = f'/data/scratch/projects/punim1928/NA/RQ3/result_llms/ocaml/gpt-5/{llm}'
+        meta_path = f"{project_root}/LeetCodeMeta/{filename}"
+        private_path = f"{private_testcase_path}/{filename}"
+        filename = filename.replace('-','_')
+        llms_path = f"{project_root}/RQ3/result_llms/ocaml/gpt-5/{filename}"
         
         with open(meta_path, 'r', encoding='utf-8') as f:
             row = json.load(f)
@@ -351,10 +332,7 @@ def read_file(filename):
     except:
         return None, None, None, None
 
-common_files = []
-# with open('/data/scratch/projects/punim1928/NA/RQ3/sampled_100_files.pkl', 'rb') as f:
-#     common_files = pickle.load(f)
-def save_haskell_files(problem_path, error_log_file="error.txt"):
+def save_haskell_files(problem_path):
     err = []
     i = 0
     env_dir = create_ocaml_env_copy()
@@ -363,41 +341,18 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
         try:  
            
             if os.path.exists(f"{output_dir}/{filename}"):
-                print(f"Continue complete {filename}")
                 continue
-            # if not os.path.exists(f"{output_check_dir}/{filename}"):
-            #     print(f"Continue not complete {filename}")
-            #     continue
-            # if filename not in common_files:
-            #     print(f"Continue {filename} not in common files")
-            #     continue
-            
-            # if filename != 'count-prefixes-of-a-given-string.json':
-            #     continue
-            # if i >= 2:
-            
-            #     break
-            # if i < 21:
-            #     continue
             i+=1
-            # if i>=200:
-            #    break
-            print(f"🙀Processing the problem {i}th {filename}")
             problem_results = []
             problem_name = filename.replace(".json","")
             row, private_row, test_code,meta_path = read_file(filename)
             if test_code == None:
-                print("do not have file " + problem_name)
                 continue
             if not os.path.exists(meta_path):
-                del_file.append(problem_name)
-                print("do not have file " + problem_name)
                 continue
             try:
                 metadata = row['metadata']
             except:
-                    print(f"skip {question_title} because metadata is None")
-                    del_file.append(row['name'])
                     continue
             func_name = metadata['func_name']
         
@@ -410,13 +365,10 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
             elif isinstance(public_test_cases, list):
                 public_cases = public_test_cases  # Directly use list
             else:
-                del_file.append(filename)
-                print(f"⚠️ Bỏ qua {question_title}: public_test_cases không hợp lệ ({type(public_test_cases)})")
                 continue
             count = 0
             
             for case in public_cases:
-                print(case)
                 count+=1
               
                 ocaml_code = generate_public_ocaml_test_file(question_title, func_name, case, python_template,0)
@@ -428,7 +380,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                     print("✅ True Syntax")
                     try:
                         result = run_single_ocaml_test(env_dir, test_code, ocaml_code)
-                        print(f"This is result {result}")
                         problem_results.append({
                     "Test_num": count,
                     "Result": result})
@@ -438,8 +389,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                         err.append("Output err")
                         continue
                 else:
-                     
-                        print("❌False Syntax")
                         err.append("Syntax error")
                         break
                 
@@ -465,8 +414,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                     "Test_num": count,
                     "Result": result})
                     except:
-                        print("output err")
-                        err.append("Output err")
                         continue
                 else:
                         
@@ -482,9 +429,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
             if problem_results:
                 with open(os.path.join(output_dir, f"{problem_name}.json"), "w") as f:
                     json.dump(problem_results, f, indent=2)
-            # if err:
-            #     with open(os.path.join("/home/error_ocaml_3.5", f"{problem_name}.json"), "w") as f:
-            #         json.dump(err, f, indent=2)
 
 
             gc.collect()
@@ -497,5 +441,5 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
         
 
 
-save_haskell_files(problem_path)
+save_haskell_files(private_testcase_path)
 print("Done!")

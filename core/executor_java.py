@@ -7,18 +7,28 @@ import uuid
 import subprocess
 import tempfile
 import sys
-sys.set_int_max_str_digits(5000)  # Tăng lên đủ lớn hơn số chữ số bạn cần
+import gc
 
-sys.path.append(os.path.abspath('/scratch/punim1928/NA/LLM4FunctionalProgramming'))
+from zipp import Path
+sys.set_int_max_str_digits(5000)  
 import subprocess
+
+def get_project_root():
+    return Path(__file__).resolve().parents[1]
+    #[0] core
+    #[1] FPEval
+project_root = get_project_root()
+output_dir = f"{project_root}/results/java/gpt-5"
+private_testcase_path =  f"{project_root}/PrivateTestCase"
 
 ####### java EXECUTOR ############
 from core.executor import JavaExecutor
 executor = JavaExecutor()
 
 def create_java_env_copy(file_name: str):
-    base_env_path = "/scratch/punim1928/NA/LLM4FunctionalProgramming/envs/java"
-    temp_env_dir = f"/scratch/punim1928/NA/tmp_4o/{file_name}"  # hoặc bạn có thể dùng /workspace/tmp_test
+    base_env_path = f"{project_root}/envs/java"
+    temp_env_dir = f"{project_root}/tmp/java_env_{uuid.uuid4().hex[:8]}"
+    temp_env_dir.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(base_env_path, temp_env_dir)
     return temp_env_dir
 
@@ -26,7 +36,7 @@ def create_java_env_copy(file_name: str):
 def main_code( java_code: str, file_name: str):
     env_dir = create_java_env_copy(file_name)
     print(java_code)
-    base_env_path = "/scratch/punim1928/NA/LLM4FunctionalProgramming/envs/java/src/main/java/Main.java"
+    base_env_path = f"{project_root}/envs/java/src/main/java/Main.java"
     main_file_path = os.path.join(env_dir, "src/main/java/Main.java")
     
     shutil.copyfile(base_env_path, main_file_path)
@@ -41,7 +51,6 @@ def main_code( java_code: str, file_name: str):
 def run_single_java_test(env_dir: str, test_code:str):
     test_file_path = os.path.join(env_dir, "src/test/java/MainTest.java")
     try:
-        # Ghi code test
 
         with open(test_file_path, "w") as f:
             f.write(test_code)
@@ -54,18 +63,9 @@ def run_single_java_test(env_dir: str, test_code:str):
         return [-1,-1,-1, e]
         
         
-        
 
-
-# def run_java_testcase(test_code: str, source_file: str):
-#     env_dir = create_java_env_copy()
-#     main_file = os.path.join(env_dir, "app", "Main.hs")
-#     executor.apply_code(test_code, main_file)
-#     return executor.execute(env_dir)
-
-###### CREAT HASKELL TEST FILE ###########
+###### CREATE JAVA TEST FILE ###########
 def extract_types_from_docstring(docstring):
-    """Trích xuất kiểu dữ liệu từ docstring, bao gồm cả danh sách."""
     type_pattern = r":type (\w+): ([\w\[\], ]+)"
     return_pattern = r":rtype: ([\w\[\], ]+)"
 
@@ -105,14 +105,11 @@ def python_type_to_java(python_type):
     return parse_type(python_type)
 
 def python_list_to_java(py_list_str):
-    """
-    Chuyển danh sách Python (ở dạng chuỗi) thành cú pháp Java Arrays.asList(...)
-    """
+
     def replace_nested(match):
         content = match.group(1)
         return f"new ArrayList<>(Arrays.asList({content}))"
 
-    # Xử lý list lồng nhau trước (tìm  `[...]` lặp lại nhiều lần)
     while re.search(r"\[([^\[\]]+)\]", py_list_str):
         py_list_str = re.sub(r"\[([^\[\]]+)\]", replace_nested, py_list_str)
 
@@ -173,18 +170,8 @@ print(param_types)
 # print(java_return)
 # print(sig)  # maxContainers :: Int -> Int -> Int -> Int
 # print(fn)   # maxContainers n w maxWeight
-import re
 
-#############################
-with open('/scratch/punim1928/NA/LLM4FunctionalProgramming/leetcode_updated.json', 'r') as f:
-    data = json.load(f)  # Không phải json.loads(f.read()) hay đọc từng dòng
 ####################################
-import os
-import json
-import re
-
-import subprocess
-import gc
 
 
 base_type_mappings = {
@@ -199,21 +186,17 @@ base_type_mappings = {
 }
 
 def extract_value_between_params(input_str, param1, param2=None):
-    """
-    Trích xuất giá trị giữa param1 và param2 từ input_str,
-    hỗ trợ cả kiểu danh sách (List) và chuỗi có dấu "..."
-    """
+
     if param2:
-        # Bắt danh sách, chuỗi hoặc số nguyên/dấu âm
+      
         pattern = rf"{param1} = (\[.*?\]|\".*?\"|\S+)(?=, {param2} = |$)"
     else:
-        # Bắt giá trị cho param1 đến cuối chuỗi nếu param2 không có
         pattern = rf"{param1} = (\[.*?\]|\".*?\"|\S+)$"
 
     match = re.search(pattern, input_str)
 
     if match:
-        return match.group(1).strip()  # Loại bỏ khoảng trắng thừa
+        return match.group(1).strip() 
     return None
 
 
@@ -349,15 +332,6 @@ public class MainTest {{
 
 
 def check_java_test_syntax(project_dir: str) -> bool:
-    """
-    Kiểm tra cú pháp các file Java test trong một Maven project.
-    
-    Args:
-        project_dir (str): Đường dẫn tới thư mục chứa `pom.xml`.
-
-    Returns:
-        bool: True nếu cú pháp hợp lệ, False nếu có lỗi biên dịch.
-    """
     try:
         result = subprocess.run(
             ["mvn", "test-compile"],
@@ -384,15 +358,13 @@ def check_java_test_syntax(project_dir: str) -> bool:
 
 
 
-del_file = []
-output_dir = "/scratch/punim1928/NA/results/java/gpt-5"
-problem_path =  '/scratch/punim1928/NA/LLM4FunctionalProgramming/in_out_ver2'
+
 os.makedirs(output_dir, exist_ok=True)
 def read_file(filename):
-        private_path = f"{problem_path}/{filename}"
-        meta_path = f'/scratch/punim1928/NA/LLM4FunctionalProgramming/split_by_name/{filename}'
-        lm = filename.replace('-','_')
-        llms_path = f'/data/scratch/projects/punim1928/NA/LLM4FunctionalProgramming/output/java/gpt-5/{lm}'
+        meta_path = f"{project_root}/LeetCodeMeta/{filename}"
+        private_path = f"{private_testcase_path}/{filename}"
+        filename = filename.replace('-','_')
+        llms_path = f"{project_root}/output/java/gpt-5/{filename}"
         try: 
             with open(meta_path, 'r', encoding='utf-8') as f:
                 row = json.load(f) 
@@ -415,39 +387,24 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
     index = 0
     start = 100*index
     end = 100*(index+1)
-    # env_dir = create_java_env_copy()
     for filename in sorted(os.listdir(problem_path)):
         try:
-            # if filename != 'apply-bitwise-operations-to-make-strings-equal.json':
-            #     continue
             i+=1
         
             if os.path.exists(f"{output_dir}/{filename}"):
                 print(f"Continue {filename}")
                 continue
-
-            # if filename not in common_files:
-            #     print(f"Continue {filename}")
-            #     continue
-           
-            # if i >= 200:
-            #     break
-            # if i<200:
-            #     continue
-            print(f"🙀Processing the problem {i}th {filename}")
-            # print(i)  
+            print(f"Processing the problem {i}th {filename}")
+ 
            
             problem_results = []
             problem_name = filename.replace(".json","")
             try:
                 row, private_row, java_code,meta_path = read_file(filename)
             except:
-                del_file.append(problem_name)
-                print("do not have file " + problem_name)
+            
                 continue
             if java_code is None:
-                del_file.append(problem_name)
-                print("do not have code " + problem_name)
                 continue
             
             if not os.path.exists(meta_path):
@@ -470,8 +427,6 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
             elif isinstance(public_test_cases, list):
                 public_cases = public_test_cases  # Directly use list
             else:
-                del_file.append(filename)
-                print(f"⚠️ Bỏ qua {question_title}: public_test_cases không hợp lệ ({type(public_test_cases)})")
                 continue
             count = 0
            
@@ -574,13 +529,9 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                 with open(os.path.join("/scratch/punim1928/NA/error_java_4o", f"{problem_name}.json"), "w") as f:
                     json.dump(err, f, indent=2)
             gc.collect()
-            # try:
-            #     # shutil.rmtree(env_dir)
-            # except:
-            #     continue
             continue
         
         
 
-save_haskell_files(problem_path)
+save_haskell_files(private_testcase_path)
 print("Done!")
