@@ -10,6 +10,7 @@ import tempfile
 import sys
 import pickle
 import gc
+import argparse
 
 sys.set_int_max_str_digits(5000)  
 
@@ -18,17 +19,34 @@ def get_project_root():
     #[0] core
     #[1] FPEval
 project_root = get_project_root()
-output_dir = f"{project_root}/results_llm_reasoning/ocaml/gpt4"
-private_testcase_path =  f"{project_root}/PrivateTestCase"
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='OCaml executor for LLM code evaluation')
+parser.add_argument('--llm-output-dir', type=str, default=f"{project_root}/results_llm_reasoning/ocaml/gpt4",
+                    help='LLM output directory: reads LLM-generated code from here and saves execution results here')
+parser.add_argument('--output-dir', type=str, default=f"{project_root}/results_llm_reasoning/ocaml/gpt4",
+                    help='Output directory: saves execution results here')
+parser.add_argument('--private-testcase-path', type=str, default=f"{project_root}/PrivateTestCase",
+                    help='Path to private testcase directory')
+parser.add_argument('--meta-path', type=str, default=f"{project_root}/LeetCodeMeta",
+                    help='Path to metadata directory')
+args = parser.parse_args()
+
+llm_output_dir = args.llm_output_dir
+output_dir = args.output_dir
+private_testcase_path = args.private_testcase_path
+meta_base_path = args.meta_path
 ####### OCAML EXECUTOR ############
-from core.executor import OcamlExecutor
+from executor import OcamlExecutor
+from config import logger
 executor = OcamlExecutor()
 
 def create_ocaml_env_copy():
     base_env_path = f"{project_root}/envs/ocaml"
     temp_env_dir = f"{project_root}/tmp/ocaml_env_{uuid.uuid4().hex[:8]}"
-    temp_env_dir.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(base_env_path, temp_env_dir)
+    # temp_env_dir.parent.mkdir(parents=True, exist_ok=True)
+    os.makedirs(temp_env_dir, exist_ok=True)
+    shutil.copytree(base_env_path, temp_env_dir, dirs_exist_ok=True)
     return temp_env_dir
 
 def run_single_ocaml_test(env_dir:str,test_code: str, ocaml_code: str):
@@ -44,7 +62,7 @@ def run_single_ocaml_test(env_dir:str,test_code: str, ocaml_code: str):
         output = executor.execute(env_dir)
         return output
     except Exception as e:
-        print(e)
+        logger.error(f"Error in run_single_ocaml_test: {e}")
         raise e
 
 
@@ -316,10 +334,10 @@ def check_ocaml_syntax_and_types(path: str, code: str) -> bool:
 os.makedirs(output_dir, exist_ok=True)
 def read_file(filename):
     try:
-        meta_path = f"{project_root}/LeetCodeMeta/{filename}"
+        meta_path = f"{meta_base_path}/{filename}"
         private_path = f"{private_testcase_path}/{filename}"
         filename = filename.replace('-','_')
-        llms_path = f"{project_root}/RQ3/result_llms/ocaml/gpt-5/{filename}"
+        llms_path = f"{llm_output_dir}/{filename}"
         
         with open(meta_path, 'r', encoding='utf-8') as f:
             row = json.load(f)
@@ -340,11 +358,16 @@ def save_haskell_files(problem_path):
        
         try:  
            
-            if os.path.exists(f"{output_dir}/{filename}"):
+            problem_name = filename.replace(".json","")
+
+            # Skip if result for this problem already exists
+            if os.path.exists(os.path.join(output_dir, f"{problem_name}.json")):
+                continue
+
+            if os.path.exists(f"{llm_output_dir}/{filename}"):
                 continue
             i+=1
             problem_results = []
-            problem_name = filename.replace(".json","")
             row, private_row, test_code,meta_path = read_file(filename)
             if test_code == None:
                 continue

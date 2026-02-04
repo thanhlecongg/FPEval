@@ -6,6 +6,7 @@ from generator import CodeGenerator
 import urllib3
 from huggingface_hub import HfApi, login, snapshot_download
 from basic_self_repair import main as start_repairing
+from config import logger
 
 # Increase timeout for potential large downloads/uploads
 http = urllib3.PoolManager(timeout=30.0)
@@ -19,14 +20,14 @@ def hf_login_from_env():
     if hf_token:
         try:
             login(token=hf_token)
-            print("Logged into Hugging Face Hub using HF_TOKEN.")
+            logger.info("Logged into Hugging Face Hub using HF_TOKEN.")
         except Exception as e:
-            print(f"Warning: failed to login to Hugging Face Hub: {e}")
+            logger.warning(f"failed to login to Hugging Face Hub: {e}")
     else:
-        print("HF_TOKEN not found in environment; proceeding without Hugging Face login.")
+        logger.info("HF_TOKEN not found in environment; proceeding without Hugging Face login.")
 
 def process_repo(repo_id, target_dir):
-    print(f"Downloading dataset from {repo_id} to {target_dir}...")
+    logger.info(f"Downloading dataset from {repo_id} to {target_dir}...")
     
     # This downloads the 'dataset' folder from the repo into {target_dir}/dataset
     downloaded_path = snapshot_download(
@@ -56,17 +57,17 @@ def main():
 
     # Create the specific output subdirectory early to simplify processing
     output_dir = os.path.join(args.output_path, args.language, args.model_name)
-    print(f"Output directory: {output_dir}")
+    logger.info(f"Output directory: {output_dir}")
     os.makedirs(output_dir, exist_ok=True)
 
     if not args.no_download:
-        print(f"Downloading dataset from {args.repo_id} to {TARGET_ROOT_DIR}...")
+        logger.info(f"Downloading dataset from {args.repo_id} to {TARGET_ROOT_DIR}...")
         dataset_path = process_repo(args.repo_id, TARGET_ROOT_DIR)
     else:
-        dataset_path = os.path.join(TARGET_ROOT_DIR, "dataset/LeetCodeProblemDemo")
+        dataset_path = os.path.join(TARGET_ROOT_DIR, "dataset/LeetCodeProblem")
         
     if not os.path.exists(dataset_path):
-        print(f"Error: Dataset path does not exist: {dataset_path}")
+        logger.error(f"Dataset path does not exist: {dataset_path}")
         return
 
     # Check for existing output files to support resuming
@@ -78,21 +79,21 @@ def main():
                 base_name = existing_file.replace('.json', '')
                 already_processed.add(base_name)
     
-    print(f"Already processed files: {len(already_processed)}")
+    logger.info(f"Already processed files: {len(already_processed)}")
     
     # Process files
     files_to_process = [f for f in os.listdir(dataset_path) if f not in already_processed]
     if args.workflow == "self-repair":
-        print(f"Starting repair for {args.language} using {args.model_name}...")
+        logger.info(f"Starting repair for {args.language} using {args.model_name}...")
         
         start_repairing(
             langs=[args.language], 
             models=[args.model_name]
         )
     else:
-        print(f"Generating code for {len(files_to_process)} files in {args.language} using {args.model_name}...")
+        logger.info(f"Generating code for {len(files_to_process)} files in {args.language} using {args.model_name}...")
         for i, file_name in enumerate(files_to_process):
-            print(f"[{i+1}/{len(files_to_process)}] Processing: {file_name}")
+            logger.info(f"[{i+1}/{len(files_to_process)}] Processing: {file_name}")
             
             try:
                 file_path = os.path.join(dataset_path, file_name)
@@ -113,20 +114,19 @@ def main():
                 with open(output_file, "w", encoding="utf-8") as f:
                     json.dump(results, f, indent=4, ensure_ascii=False)
                 
-                print(f"Successfully saved results to {output_file}")
+                logger.info(f"Successfully saved results to {output_file}")
                     
             except Exception as e:
-                print(f"Exception with file {file_name}: {str(e)}")
+                logger.error(f"Exception with file {file_name}: {str(e)}")
                 with open("error_log.txt", "a") as f:
                     f.write(f"{file_name}: {str(e)}\n")
-    
-    start_repairing(
-        problem_path=dataset_path,
-        input_folder=f'{args.output_path}',
-        output_folder=None,
-        langs=[args.language], 
-        models=[args.model_name]
-    )
+
 if __name__ == "__main__":
     main()
-    
+    # start_repairing(
+    #     problem_path=dataset_path,
+    #     input_folder=f'{args.output_path}',
+    #     output_folder=None,
+    #     langs=[args.language], 
+    #     models=[args.model_name]
+    # )

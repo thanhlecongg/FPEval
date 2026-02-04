@@ -14,6 +14,7 @@ from executor import HaskellExecutor, OcamlExecutor, ScalaExecutor, JavaExecutor
 
 # Do not remove this line, it is required for setting up the environment
 from config import *
+from config import logger
 
 
 _TMP_DIR = "tmp"
@@ -42,13 +43,13 @@ class CodeGenerator():
         self.output_file = output_file
         if workflow == "basic":
             self.workflow = self.basic_workflow()
-        elif workflow == "self-repair":
+        elif workflow == "self-repair": # not done
             self.workflow = self.self_repair_workflow()
-        elif workflow == "test-predict-output":
+        elif workflow == "test-predict-output": # not done
             self.workflow = self.test_output_predict_workflow()
         elif workflow == "code-execution":
             self.workflow = self.code_execution_workflow()
-        elif workflow == "repair":
+        elif workflow == "repair": 
             self.workflow = self.repair_workflow()
         elif workflow == "gen_code_workflow":
             self.workflow = self.gen_code_workflow()
@@ -82,7 +83,7 @@ class CodeGenerator():
         except (RuntimeError, MemoryError) as e:
             # Check if error is memory-related (OOM)
             if "CUDA out of memory" in str(e) or "DefaultCPUAllocator" in str(e) or "memory" in str(e).lower():
-                print(f"ERROR: Insufficient memory during initialization: {str(e)}")
+                logger.error(f"Insufficient memory during initialization: {str(e)}")
                 
                 return NotImplementedError("Insufficient memory during initialization")
             else:
@@ -115,7 +116,7 @@ class CodeGenerator():
         except (RuntimeError, MemoryError) as e:
             # Check if error is memory-related (OOM)
             if "CUDA out of memory" in str(e) or "DefaultCPUAllocator" in str(e) or "memory" in str(e).lower():
-                print(f"ERROR: Insufficient memory during code generation: {str(e)}")
+                logger.error(f"Insufficient memory during code generation: {str(e)}")
                 
                 # Try to free up memory
                 gc.collect()
@@ -199,14 +200,14 @@ class CodeGenerator():
     def analysis_condition(self, state: State):
         status, _, _, _ = state["validation_traces"][-1]
         if status == 0:
-            print("Validation passed !!!")
+            logger.info("Validation passed !!!")
             return "passed"
 
         if state["n_iters"] >= state["max_iters"]:
-            print("Maximum iterations reached !!!")
+            logger.warning("Maximum iterations reached !!!")
             return "terminated"
 
-        print("Validation failed !!!")
+        logger.info("Validation failed !!!")
         return "failed"
 
     def basic_workflow(self):
@@ -330,7 +331,7 @@ class CodeGenerator():
         def extract_curr_code_from_output(path: str) -> str:
             with open(path) as f:
                 data = json.load(f)
-            print("Data loaded from file:", data)
+            logger.debug(f"Data loaded from file: {data}")
             
             for msg in data.get("messages", []):
                 if msg.get("idx") == 2 and msg.get("role") == "ai":
@@ -365,8 +366,8 @@ class CodeGenerator():
         except (RuntimeError, MemoryError) as e:
             # Check if error is memory-related (OOM)
             if "CUDA out of memory" in str(e) or "DefaultCPUAllocator" in str(e) or "memory" in str(e).lower():
-                print(f"ERROR: Insufficient memory during code generation: {str(e)}")
-                print("Unable to complete model invocation due to memory constraints")
+                logger.error(f"Insufficient memory during code generation: {str(e)}")
+                logger.error("Unable to complete model invocation due to memory constraints")
             
                 # Create a minimal event structure to return
                 error_event = {
@@ -394,7 +395,7 @@ class CodeGenerator():
         config (dict): Configuration for the workflow.
         """
 
-        print("generate is called")
+        logger.info("generate is called")
 
         meta_path = os.path.join(path, "meta.json")
         with open(meta_path) as f:
@@ -439,8 +440,7 @@ class CodeGenerator():
                 file.write(updated_test_code)
 
         else:
-            print("failed to find language")
-            print(self.language)
+            logger.error(f"failed to find language: {self.language}")
             raise NotImplementedError(
                 f"Language {self.language} not implemented")
 
@@ -451,13 +451,13 @@ class CodeGenerator():
         code = ''
         if self.workflow_type == "code-execution":
             code =  meta_data[f"{self.language}_code"]
-        print(f"Description: {description}")
-        print(f"Function: {function_signature}")
-        print("Language: ", self.language)
+        logger.info(f"Description: {description}")
+        logger.info(f"Function: {function_signature}")
+        logger.info(f"Language: {self.language}")
 
-        print("invoking model")
+        logger.info("invoking model")
         last_event = self.model_invoke(description, function_signature, function_name, test_cases, code, config)
-        print("invoking model finished")
+        logger.info("invoking model finished")
 
         messages = []
 

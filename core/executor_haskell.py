@@ -8,27 +8,50 @@ import subprocess
 import tempfile
 import sys
 import pickle
+import argparse
 from zipp import Path
 import gc
 
 sys.set_int_max_str_digits(5000) # Increase the limit for integer string conversion
 def get_project_root():
-    return Path(__file__).resolve().parents[1]
+    # return Path(__file__).resolve().parents[1]
+    return "/workspace"
     #[0] core
     #[1] FPEval
 project_root = get_project_root()
-output_dir = f"{project_root}/results_llm_reasoning/haskell/gpt4"
-private_testcase_path =  f"{project_root}/PrivateTestCase"
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Haskell executor for LLM code evaluation')
+parser.add_argument('--llm-output-dir', type=str, default=f"{project_root}/results_llm_reasoning/haskell/gpt4",
+                    help='LLM output directory: reads LLM-generated code from here and saves execution results here')
+parser.add_argument('--output-dir', type=str, default=f"{project_root}/results_llm_reasoning/haskell/gpt4",
+                    help='Output directory: saves execution results here')
+parser.add_argument('--private-testcase-path', type=str, default=f"{project_root}/PrivateTestCase",
+                    help='Path to private testcase directory')
+parser.add_argument('--meta-path', type=str, default=f"{project_root}/LeetCodeMeta",
+                    help='Path to metadata directory')
+parser.add_argument('--base-env-path', type=str, default=f"{project_root}/envs/haskell",
+                    help='Path to base environment directory')
+parser.add_argument('--tmp-env-path', type=str, default=f"{project_root}/tmp/haskell_env_{uuid.uuid4().hex[:8]}",
+                    help='Path to temporary environment directory')
+args = parser.parse_args()
+
+llm_output_dir = args.llm_output_dir
+output_dir = args.output_dir
+private_testcase_path = args.private_testcase_path
+meta_base_path = args.meta_path
 
 ####### HASKELL EXECUTOR ############
-from core.executor import HaskellExecutor
+from executor import HaskellExecutor
+from config import logger
 executor = HaskellExecutor()
 
 def create_haskell_env_copy():
-    base_env_path = f"{project_root}/envs/haskell"
-    temp_env_dir = f"{project_root}/tmp/haskell_env_{uuid.uuid4().hex[:8]}"
-    temp_env_dir.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(base_env_path, temp_env_dir)
+    base_env_path = args.base_env_path
+    temp_env_dir = args.tmp_env_path
+    # temp_env_dir.parent.mkdir(parents=True, exist_ok=True)
+    os.makedirs(temp_env_dir, exist_ok=True)
+    shutil.copytree(base_env_path, temp_env_dir, dirs_exist_ok=True)
 
     #Path to the cabal file after copying
     cabal_file_path = os.path.join(temp_env_dir, "haskell.cabal")
@@ -55,7 +78,7 @@ def run_single_haskell_test(env_dir:str,test_code: str, haskell_code: str):
         output = executor.execute(env_dir)
         return output
     except Exception as e:
-        print(e)
+        logger.error(f"Error in run_single_haskell_test: {e}")
         raise e
 
 ###### CREAT HASKELL TEST FILE ###########
@@ -334,11 +357,14 @@ def check_haskell_syntax_and_types(path:str,code: str) -> bool:
 os.makedirs(output_dir, exist_ok=True)
 def read_file(filename):
     try:
-        meta_path = f"{project_root}/LeetCodeMeta/{filename}"
+        meta_path = f"{meta_base_path}/{filename}"
         private_path = f"{private_testcase_path}/{filename}"
         filename = filename.replace('-','_')
-        llms_path = f"{project_root}/output/haskell/gpt-5/{filename}"
-    
+        # llms_path = f"{project_root}/output/haskell/gpt-5/{filename}"
+        llms_path = f"{llm_output_dir}/{filename}"
+        print(f"meta_path: {meta_path}")
+        print(f"private_path: {private_path}")
+        print(f"llms_path: {llms_path}")
         with open(meta_path, 'r', encoding='utf-8') as f:
             row = json.load(f)
            
@@ -368,6 +394,7 @@ def read_file(filename):
         )
         return row, private_row, test_code,meta_path
     except:
+        print(f"Error in reading file {filename}")
         return None, None, None, None
 common_files = []
 def save_haskell_files(problem_path):
@@ -375,13 +402,20 @@ def save_haskell_files(problem_path):
     env_dir = create_haskell_env_copy()
     for filename in sorted(os.listdir(problem_path)):
         try:  
-            if os.path.exists(f"{output_dir}/{filename}"):
+            i+=1
+            problem_name = filename.replace(".json","")
+
+            # Skip if result for this problem already exists
+            if os.path.exists(os.path.join(output_dir, f"{problem_name}.json")):
+                print(f"Skip {filename} because output already exists")
+                continue
+
+            if os.path.exists(f"{llm_output_dir}/{filename}"):
                 print(f"Continue {filename}")
                 continue
-            i+=1
-            print(f"Processing the problem {i}th {filename}")
+            # break
+            # print(f"Processing the problem {i}th {filename}")
             problem_results = []
-            problem_name = filename.replace(".json","")
             row, private_row, test_code,meta_path = read_file(filename)
             if row == None:
                 continue
@@ -468,16 +502,19 @@ def save_haskell_files(problem_path):
 
             
             if problem_results:
+                print(f"Saving results to {output_dir}/{problem_name}.json")
                 with open(os.path.join(output_dir, f"{problem_name}.json"), "w") as f:
                     json.dump(problem_results, f, indent=2)
 
             gc.collect()
         except subprocess.CalledProcessError as e:
             if len(problem_results)>2:
+                print(f"Error in saving results to {output_dir}/{problem_name}.json")
                 with open(os.path.join(output_dir, f"{problem_name}.json"), "w") as f:
                     json.dump(problem_results, f, indent=2)
             print(e)
             continue
+        # break
         
     
 

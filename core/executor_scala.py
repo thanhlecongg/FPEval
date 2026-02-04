@@ -9,17 +9,34 @@ import tempfile
 import sys
 from pathlib import Path
 import gc
+import argparse
 
 def get_project_root():
     return Path(__file__).resolve().parents[1]
     #[0] core
     #[1] FPEval
 project_root = get_project_root()
-output_dir = f"{project_root}/llms_results/scala/gpt5"
-private_testcase_path =  f"{project_root}/PrivateTestCase"
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Scala executor for LLM code evaluation')
+parser.add_argument('--llm-output-dir', type=str, default=f"{project_root}/llms_results/scala/gpt5",
+                    help='LLM output directory: reads LLM-generated code from here and saves execution results here')
+parser.add_argument('--output-dir', type=str, default=f"{project_root}/llms_results/scala/gpt5",
+                    help='Output directory: saves execution results here')
+parser.add_argument('--private-testcase-path', type=str, default=f"{project_root}/PrivateTestCase",
+                    help='Path to private testcase directory')
+parser.add_argument('--meta-path', type=str, default=f"{project_root}/LeetCodeMeta",
+                    help='Path to metadata directory')
+args = parser.parse_args()
+
+llm_output_dir = args.llm_output_dir
+output_dir = args.output_dir
+private_testcase_path = args.private_testcase_path
+meta_base_path = args.meta_path
 
 sys.set_int_max_str_digits(5000) 
 import subprocess
+from config import logger
 
 def execute_command(command, timeout=60):
     try:
@@ -36,15 +53,16 @@ def execute_command(command, timeout=60):
         return "Timeout"
 
 ####### SCALA EXECUTOR ############
-from core.executor import ScalaExecutor
+from executor import ScalaExecutor
 executor = ScalaExecutor()
 
 def create_scala_env_copy():
 
     base_env_path = f"{project_root}/envs/scala"
     temp_env_dir = f"{project_root}/tmp/scala_env_{uuid.uuid4().hex[:8]}"  
-    temp_env_dir.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(base_env_path, temp_env_dir)
+    # temp_env_dir.parent.mkdir(parents=True, exist_ok=True)
+    os.makedirs(temp_env_dir, exist_ok=True)
+    shutil.copytree(base_env_path, temp_env_dir, dirs_exist_ok=True)
     return temp_env_dir
 
 
@@ -337,10 +355,10 @@ del_file = []
 
 os.makedirs(output_dir, exist_ok=True)
 def read_file(filename):
-        meta_path = f"{project_root}/LeetCodeMeta/{filename}"
+        meta_path = f"{meta_base_path}/{filename}"
         private_path = f"{private_testcase_path}/{filename}"
         filename = filename.replace('-','_')
-        llms_path = f"{project_root}/output/scala/gpt-5/{filename}"
+        llms_path = f"{llm_output_dir}/{filename}"
         
         with open(meta_path, 'r', encoding='utf-8') as f:
             row = json.load(f)
@@ -363,14 +381,20 @@ def save_scala_files(private_testcase_path, error_log_file="error.txt"):
         err_compile = 0
         try:
             i+=1
-            if os.path.exists(f"{output_dir}/{filename}"):
+            problem_name = filename.replace(".json","")
+
+            # Skip if result for this problem already exists
+            if os.path.exists(os.path.join(output_dir, f"{problem_name}.json")):
+                print(f"Skip {filename} because output already exists")
+                continue
+
+            if os.path.exists(f"{llm_output_dir}/{filename}"):
                 print(f"Continue {filename}")
                 continue
            
             print(f"Processing the problem {i}th {filename}")
             
             problem_results = []
-            problem_name = filename.replace(".json","")
             try:
                 row, private_row, scala_code,meta_path = read_file(filename)
             except:

@@ -1,11 +1,15 @@
 #! /bin/bash
 
-export HUGGINGFACE_TOKEN=xxxxxxxxxxx
+export HUGGINGFACE_TOKEN=hxxxx
 export HUGGINFACE_REPO_ID=FPEvalRepoPublic/LeetCodeProblem
-export LANGUAGE=scala
+export OPENAI_API_KEY=xxxxx
+export BASE_URL=xxxx
+export HF_TOKEN=hxxxx
+export LANGUAGE=scala # has
 export WORKFLOW=basic
-export MODEL_NAME=openai/gpt-4o-mini
-export OUTPUT_PATH=/workspace/output/demo
+# export MODEL_NAME=openai/gpt-4o-mini #openai/gpt-4o
+export MODEL_NAME=Qwen/Qwen2.5-1.5B-Instruct
+export OUTPUT_PATH=/workspace/output/
 
 # Change to core directory so Python can find the modules
 cd "$(dirname "$0")/../core" || exit 1

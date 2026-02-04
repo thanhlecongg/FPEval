@@ -8,28 +8,46 @@ import subprocess
 import tempfile
 import sys
 import gc
+import argparse
 
 from zipp import Path
 sys.set_int_max_str_digits(5000)  
 import subprocess
+from config import logger
 
 def get_project_root():
     return Path(__file__).resolve().parents[1]
     #[0] core
     #[1] FPEval
 project_root = get_project_root()
-output_dir = f"{project_root}/results/java/gpt-5"
-private_testcase_path =  f"{project_root}/PrivateTestCase"
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Java executor for LLM code evaluation')
+parser.add_argument('--llm-output-dir', type=str, default=f"{project_root}/results/java/gpt-5",
+                    help='LLM output directory: reads LLM-generated code from here and saves execution results here')
+parser.add_argument('--output-dir', type=str, default=f"{project_root}/results/java/gpt-5",
+                    help='Output directory: saves execution results here')
+parser.add_argument('--private-testcase-path', type=str, default=f"{project_root}/PrivateTestCase",
+                    help='Path to private testcase directory')
+parser.add_argument('--meta-path', type=str, default=f"{project_root}/LeetCodeMeta",
+                    help='Path to metadata directory')
+args = parser.parse_args()
+
+llm_output_dir = args.llm_output_dir
+output_dir = args.output_dir
+private_testcase_path = args.private_testcase_path
+meta_base_path = args.meta_path
 
 ####### java EXECUTOR ############
-from core.executor import JavaExecutor
+from executor import JavaExecutor
 executor = JavaExecutor()
 
 def create_java_env_copy(file_name: str):
     base_env_path = f"{project_root}/envs/java"
     temp_env_dir = f"{project_root}/tmp/java_env_{uuid.uuid4().hex[:8]}"
-    temp_env_dir.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(base_env_path, temp_env_dir)
+    # temp_env_dir.parent.mkdir(parents=True, exist_ok=True)
+    os.makedirs(temp_env_dir, exist_ok=True)
+    shutil.copytree(base_env_path, temp_env_dir, dirs_exist_ok=True)
     return temp_env_dir
 
 
@@ -45,7 +63,7 @@ def main_code( java_code: str, file_name: str):
         executor = JavaExecutor()
         executor.apply_code(java_code, main_file_path)  
     except Exception as e:
-        print(e.stderr)
+        logger.error(f"Error applying code: {e.stderr}")
         raise e
     return env_dir
 def run_single_java_test(env_dir: str, test_code:str):
@@ -162,7 +180,7 @@ class Solution(object):
 
 java_return,params, param_types = extract_java_signature(python_template)
 
-print(param_types)
+logger.debug(f"Param types: {param_types}")
 
 # java_return,sig, fn,params,param_types = extract_java_signature(python_template)
 # print(param_types)
@@ -304,7 +322,7 @@ def generate_private_java_test_file(problem_name, func_name, case, python_templa
             test_input = ",".join(inp for inp in input_var if inp)
             
         except:
-                print("error test_input")
+                logger.error("error test_input")
                 return
      
         
@@ -317,7 +335,7 @@ def generate_private_java_test_file(problem_name, func_name, case, python_templa
             test_output = python_list_to_java(test_output)
         
     except subprocess.CalledProcessError as e:
-            print("heloo" + e)
+            logger.error(f"Error: {e}")
     return f"""
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
@@ -342,18 +360,17 @@ def check_java_test_syntax(project_dir: str) -> bool:
         )
 
         if result.returncode == 0:
-            print("✅ Test syntax is valid.")
+            logger.info("✅ Test syntax is valid.")
             return True
         else:
-            print("STDOUT:")
-            print(result.stdout)
-            print("❌ Syntax error in test files.")
-            print(result.stderr)
+            logger.debug(f"STDOUT: {result.stdout}")
+            logger.error("❌ Syntax error in test files.")
+            logger.error(f"STDERR: {result.stderr}")
             return False
 
     except FileNotFoundError:
 
-        print("❌ Maven (mvn) is not installed or not in PATH.")
+        logger.error("❌ Maven (mvn) is not installed or not in PATH.")
         return False
 
 
@@ -361,10 +378,10 @@ def check_java_test_syntax(project_dir: str) -> bool:
 
 os.makedirs(output_dir, exist_ok=True)
 def read_file(filename):
-        meta_path = f"{project_root}/LeetCodeMeta/{filename}"
+        meta_path = f"{meta_base_path}/{filename}"
         private_path = f"{private_testcase_path}/{filename}"
         filename = filename.replace('-','_')
-        llms_path = f"{project_root}/output/java/gpt-5/{filename}"
+        llms_path = f"{llm_output_dir}/{filename}"
         try: 
             with open(meta_path, 'r', encoding='utf-8') as f:
                 row = json.load(f) 
@@ -390,31 +407,39 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
     for filename in sorted(os.listdir(problem_path)):
         try:
             i+=1
-        
-            if os.path.exists(f"{output_dir}/{filename}"):
-                print(f"Continue {filename}")
+            problem_name = filename.replace(".json","")
+
+            # Skip if result for this problem already exists
+            if os.path.exists(os.path.join(output_dir, f"{problem_name}.json")):
+                logger.info(f"Skip {filename} because output already exists")
                 continue
-            print(f"Processing the problem {i}th {filename}")
- 
+
+            if os.path.exists(f"{llm_output_dir}/{filename}"):
+                logger.info(f"Continue {filename}")
+                continue
+
+            logger.info(f"Processing the problem {i}th {filename}")
            
             problem_results = []
-            problem_name = filename.replace(".json","")
             try:
                 row, private_row, java_code,meta_path = read_file(filename)
             except:
-            
+                del_file.append(problem_name)
+                logger.warning(f"do not have file {problem_name}")
                 continue
             if java_code is None:
+                del_file.append(problem_name)
+                logger.warning(f"do not have code {problem_name}")
                 continue
             
             if not os.path.exists(meta_path):
                 del_file.append(problem_name)
-                print("do not have file " + problem_name)
+                logger.warning(f"do not have file {problem_name}")
                 continue
             try:
                 metadata = row['metadata']
             except:
-                    print(f"skip {question_title} because metadata is None")
+                    logger.warning(f"skip {question_title} because metadata is None")
                     del_file.append(row['name'])
                     continue
             func_name = metadata['func_name']
@@ -427,18 +452,20 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
             elif isinstance(public_test_cases, list):
                 public_cases = public_test_cases  # Directly use list
             else:
+                del_file.append(filename)
+                logger.warning(f"⚠️ Bỏ qua {question_title}: public_test_cases không hợp lệ ({type(public_test_cases)})")
                 continue
             count = 0
            
             env_dir = main_code(java_code, problem_name)
-            print("This is env: " + str(env_dir))
+            logger.debug(f"This is env: {env_dir}")
             for case in public_cases:
-                print("count")
+                logger.debug(f"count: {count}")
                 count+=1
                
                 java_test = generate_public_java_test_file(question_title, func_name, case, python_template,0)
                 if java_test is None:
-                    print("Skip because java_test is None")
+                    logger.warning("Skip because java_test is None")
                     continue
                 # check_test_case = generate_public_java_test_file(question_title, func_name, case, python_template,1)
                 if check_java_test_syntax(env_dir):
@@ -471,7 +498,7 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
             for ind in range(len(private_row)):
                
                 count +=1 
-                print(count)
+                logger.debug(f"count: {count}")
                 if count > 10:
                     break
                 private = private_row[ind]
@@ -483,7 +510,7 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
                                 "Test_num": count,
                                 "Result": result})
                         if result[0] == -2 and result[1] == -1 and result[2] == -1:
-                            print("\n\nTime out, need break.")
+                            logger.warning("\n\nTime out, need break.")
                             break
                     except Exception as e:
 
@@ -521,7 +548,7 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
            
         except subprocess.CalledProcessError as e:
         
-            print(e)
+            logger.error(f"Error: {e}")
             if problem_results:
                 with open(os.path.join(output_dir, f"{problem_name}.json"), "w") as f:
                     json.dump(problem_results, f, indent=2)
@@ -534,4 +561,4 @@ def save_haskell_files(problem_path, error_log_file="error.txt"):
         
 
 save_haskell_files(private_testcase_path)
-print("Done!")
+logger.info("Done!")

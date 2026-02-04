@@ -5,6 +5,7 @@ import pickle as pkl
 from pathlib import Path
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
+from config import logger
 
 
 class CodeRepairAssistant:
@@ -75,13 +76,13 @@ def main():
 
             for file_name in sorted(os.listdir(problem_path)):
                 if os.path.exists(f"{output_folder}/{file_name}"):
-                    print(f"Continue exist {file_name}")
+                    logger.info(f"Continue exist {file_name}")
                     continue
                 clean_file_name = file_name.replace("-", "_")
                 input_path = input_folder / lang / model_name / clean_file_name
 
                 if not input_path.exists():
-                    print(f"File not found: {input_path}")
+                    logger.warning(f"File not found: {input_path}")
                     continue
 
                 with open(input_path, "r", encoding="utf-8") as f:
@@ -91,13 +92,13 @@ def main():
                 response = msg[1].get("response", "").split("###")
 
                 if len(response) < 4:
-                    print(f"Skipping {file_name}: malformed response sections.")
+                    logger.warning(f"Skipping {file_name}: malformed response sections.")
                     continue
 
                 description = "###" + response[1]
                 curr_code = data.get("code_traces", [""])[0]
                 if curr_code == "":
-                    print(f"Skipping {file_name} as no code is available.")
+                    logger.warning(f"Skipping {file_name} as no code is available.")
                     continue
                 template = "###" + response[2]
                 answer = "###" + response[3]
@@ -131,11 +132,11 @@ def main():
                 }
 
                 output_path = output_folder / clean_file_name
-                print(repaired_data)
+                logger.debug(f"Repaired data: {repaired_data}")
                 with open(output_path, "w", encoding="utf-8") as f:
                     json.dump(repaired_data, f, ensure_ascii=False, indent=4)
 
-                print(f"Repaired code saved for {model_name} -> {output_path}")
+                logger.info(f"Repaired code saved for {model_name} -> {output_path}")
 
 
 if __name__ == "__main__":

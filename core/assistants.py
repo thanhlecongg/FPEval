@@ -15,7 +15,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 from huggingface_hub import login
 import gc
 import os
-
+from config import logger
+from typing import Any
 def get_code_from_response(response: str, language: str) -> str:
     """
     Extracts code blocks from a response string.
@@ -41,7 +42,7 @@ def get_code_from_response(response: str, language: str) -> str:
     return ''.join(code_blocks)
 
 
-def test_llm_connection(model_name: str = "gpt-5") -> bool:
+def test_llm_connection(model_name: str | Any = "gpt-5", class_name: str = None) -> bool:
     """
     Quickly test whether the configured LLM can be instantiated and respond to a
     trivial prompt.
@@ -51,10 +52,12 @@ def test_llm_connection(model_name: str = "gpt-5") -> bool:
     """
     
     try:
-        if model_name is type(ChatOpenAI):
+        if not isinstance(model_name, str):
+            logger.debug(f"Using existing LLM: {model_name}")
             llm = model_name
         else:
-            llm = create_llm(model_name)
+            logger.debug(f"Creating new LLM: {model_name}")
+            llm = create_llm(model_name, class_name=class_name)
         messages = [
             (
                 "system",
@@ -63,16 +66,18 @@ def test_llm_connection(model_name: str = "gpt-5") -> bool:
             ("human", "I love programming."),
         ]
         ai_msg = llm.invoke(messages)
-        print(ai_msg)
-        print(f"LLM connection OK for model '{model_name}'.")
+        logger.debug(f"LLM test response: {ai_msg}")
+        logger.debug(f"LLM connection OK for model '{model_name}'.")
         return True
     except Exception as e:
-        print(f"LLM connection FAILED for model '{model_name}': {e}")
+        logger.error(f"LLM connection FAILED for model '{model_name}': {e}")
         return False
 
-def create_llm(model_name: str):
+def create_llm(model_name: str, class_name: str = None):
+    if class_name:
+        logger.info(f"[{class_name}] Creating LLM with model: {model_name}")
     if model_name == "gpt-5":
-        print("Using gpt-5")
+        logger.debug("Using gpt-5")
         return ChatOpenAI(
             model="gpt-5.1",
             temperature=1,
@@ -84,7 +89,7 @@ def create_llm(model_name: str):
             api_key=os.environ.get('OPENAI_API_KEY', '')
         )
     if model_name == "gpt-3.5-turbo":
-        print("Using gpt-3.5-turbo")
+        logger.debug("Using gpt-3.5-turbo")
         return ChatOpenAI(
             model="gpt-3.5-turbo",
             temperature=0.7,
@@ -92,17 +97,17 @@ def create_llm(model_name: str):
             base_url=os.environ.get('BASE_URL', ''),
             api_key=os.environ.get('OPENAI_API_KEY', '')
         )
-    elif model_name == "gpt-4o":
-        print("Using gpt-4o")
+    elif model_name == "gpt-4o" or model_name == "openai/gpt-4o":
+        logger.debug("Using gpt-4o")
         return ChatOpenAI(
-            model="gpt-4o",
+            model=model_name,
             temperature=0.7,
             max_tokens=2048,
             base_url=os.environ.get('BASE_URL', ''),
             api_key=os.environ.get('OPENAI_API_KEY', '')
         )
     elif model_name == "gpt-4o-mini" or model_name=='openai/gpt-4o-mini':
-        print("Using gpt-4o")
+        logger.debug("Using gpt-4o-mini")
         return ChatOpenAI(
             model=model_name,
             temperature=0.7,
@@ -111,7 +116,7 @@ def create_llm(model_name: str):
             api_key=os.environ.get('OPENAI_API_KEY', '')
         )
     elif model_name == "gpt-4.1":
-        print("Using gpt-4.1")
+        logger.debug("Using gpt-4.1")
         return ChatOpenAI(
             model="gpt-4.1",
             temperature=0.7,
@@ -120,7 +125,7 @@ def create_llm(model_name: str):
             api_key=os.environ.get('OPENAI_API_KEY', '')
         )
     elif model_name == "gpt-o1":
-        print("Using gpt-o1")
+        logger.debug("Using gpt-o1")
         return ChatOpenAI(
             model="gpt-o1",
             temperature=1,
@@ -129,13 +134,34 @@ def create_llm(model_name: str):
             api_key=os.environ.get('OPENAI_API_KEY', '')
         )
     elif model_name == "gpt-o3-mini":
-        print("Using gpt-o3-mini")
+        logger.debug("Using gpt-o3-mini")
         return ChatOpenAI(
             model="o3-mini",
             temperature=1,
             max_tokens=2048,
             base_url=os.environ.get('BASE_URL', ''),
             api_key=os.environ.get('OPENAI_API_KEY')
+        )
+    elif model_name == "Qwen/Qwen2.5-1.5B-Instruct":
+        logger.debug("Using Qwen/Qwen2.5-1.5B-Instruct")
+        return ChatOpenAI(
+            model="Qwen/Qwen2.5-1.5B-Instruct",
+            temperature=1,
+            max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY')
+        )
+    elif model_name == "Qwen/Qwen3-Coder-30B-A3B-Instruct":
+        logger.debug("Using Qwen/Qwen3-Coder-30B-A3B-Instruct")
+        return ChatOpenAI(
+            model="Qwen/Qwen3-Coder-30B-A3B-Instruct",
+            temperature=1,
+            max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY'),
+            extra_body={
+                "chat_template_kwargs": {"enable_thinking": False},
+            }
         )
     elif model_name == "sonnet":
         return ChatAnthropic(
@@ -194,7 +220,7 @@ def create_llm(model_name: str):
 
         # Check if model files exist locally
         if not os.path.exists(model_dir):
-            print(f"{repo_id} model was not found locally - now downloading model from Huggingface")
+            logger.info(f"{repo_id} model was not found locally - now downloading model from Huggingface")
             try: 
                 # Save Tokenizer locally
                 tokenizer = AutoTokenizer.from_pretrained(repo_id)
@@ -207,18 +233,18 @@ def create_llm(model_name: str):
                     torch_dtype=torch.float16
                 )
                 model.save_pretrained(model_dir)
-                print(f"Model saved to {model_dir}")
+                logger.info(f"Model saved to {model_dir}")
 
             except (RuntimeError, MemoryError) as e:
                 # Check if error is memory-related (OOM)
                 if "CUDA out of memory" in str(e) or "DefaultCPUAllocator" in str(e) or "memory" in str(e).lower():
-                    print(f"ERROR: Insufficient memory during model initialization: {str(e)}")
+                    logger.error(f"Insufficient memory during model initialization: {str(e)}")
                     # Try to free up memory
                     gc.collect()
                     if torch.cuda.is_available():
                         torch.cuda.empty_cache()
 
-                    print("Attempting to load with reduced memory settings...")
+                    logger.info("Attempting to load with reduced memory settings...")
                     tokenizer = AutoTokenizer.from_pretrained(repo_id, cache_dir=model_dir)
                     model = AutoModelForCausalLM.from_pretrained(
                             repo_id,
@@ -231,7 +257,7 @@ def create_llm(model_name: str):
                     # Re-raise non-memory errors
                     raise
         else:  
-            print("found model locally")
+            logger.info("found model locally")
             # Load local model and tokenizer
             try: 
                 tokenizer = AutoTokenizer.from_pretrained(model_dir)
@@ -243,13 +269,13 @@ def create_llm(model_name: str):
             except (RuntimeError, MemoryError) as e:
                 # Check if error is memory-related (OOM)
                 if "CUDA out of memory" in str(e) or "DefaultCPUAllocator" in str(e) or "memory" in str(e).lower():
-                    print(f"ERROR: Insufficient memory during model initialization: {str(e)}")
+                    logger.error(f"Insufficient memory during model initialization: {str(e)}")
                     # Try to free up memory
                     gc.collect()
                     if torch.cuda.is_available():
                         torch.cuda.empty_cache()
 
-                    print("Attempting to load with reduced memory settings...")
+                    logger.info("Attempting to load with reduced memory settings...")
                     tokenizer = AutoTokenizer.from_pretrained(model_dir, cache_dir=model_dir)
                     model = AutoModelForCausalLM.from_pretrained(
                             model_dir,
@@ -338,20 +364,21 @@ class CodingAssistant(Assistant):
     """
 
     def __init__(self, model_name):
-        self.llm = create_llm(model_name)
+        self.llm = create_llm(model_name, class_name=self.__class__.__name__)
+        logger.debug(f"TYPE OF LLM: {type(self.llm)}")
         self.prompt_template = ChatPromptTemplate.from_messages([
             (
                 "system",
-                "You are an expert {lang} programmer. You will be given a question (problem specification) and will generate a correct {lang} program that matches the specification and passes all tests. You will NOT return anything except for the program AND neccessary imports.\n",
+                "You are an expert {lang} programmer. You will be given a question (problem specification) and will generate a correct {lang} program that matches the specification and passes all tests. You will NOT return anything except for the program AND neccessary imports. Only generate the code, no explain\n",
             ),
             ("human", "### QUESTION:\n{description}\n"
             "### FORMAT: You will use the following starter code to write the solution to the problem and enclose your code within delimiters.\n{template}\n"
             "### ANSWER: (use the provided format with backticks)\n"),
         ])
         if not self.test_connection():
-            raise ValueError(f"LLM connection FAILED for model '{self.llm.model_name}'")
+            raise ValueError(f"CodingAssistant LLM connection FAILED for model '{self.llm.model_name}'")
     def test_connection(self):
-        return test_llm_connection(self.llm.model_name)
+        return test_llm_connection(model_name=self.llm.model_name)
     def __call__(self,
                  state: State,
                  config: RunnableConfig = None,
@@ -376,7 +403,7 @@ class CodingAssistant(Assistant):
 class CodeRepairAssistant(Assistant):
 
     def __init__(self, model_name):
-        self.llm = create_llm(model_name)
+        self.llm = create_llm(model_name, class_name=self.__class__.__name__)
         self.prompt_template = ChatPromptTemplate.from_messages([
             (
                 "system",
@@ -388,7 +415,10 @@ class CodeRepairAssistant(Assistant):
             "### FORMAT: You will use the following starter code to write the solution to the problem and enclose your code within delimiters.\n{template}\n"
             "### ANSWER: (use the provided format with backticks)\n"),
         ])
-        
+        if not self.test_connection():
+            raise ValueError(f"CodeRepairAssistant LLM connection FAILED for model '{self.llm.model_name}'")
+    def test_connection(self):
+        return test_llm_connection(model_name=self.llm.model_name)
 
     def __call__(self, state: State, config: RunnableConfig = None):
         status, n_tests, n_errors, output = state["validation_traces"][-1]
@@ -401,7 +431,7 @@ class CodeRepairAssistant(Assistant):
 class CodeBaseRepairAssistant(Assistant):
 
     def __init__(self, model_name):
-        self.llm = create_llm(model_name)
+        self.llm = create_llm(model_name, class_name=self.__class__.__name__)
         self.prompt_template = ChatPromptTemplate.from_messages([
             (
                 "system",
@@ -428,7 +458,7 @@ class CodeBaseRepairAssistant(Assistant):
 class TestOutputPredictionAssistant(Assistant):
 
     def __init__(self, model_name):
-        self.llm = create_llm(model_name)
+        self.llm = create_llm(model_name, class_name=self.__class__.__name__)
         self.prompt_template = ChatPromptTemplate.from_messages([
             (
                 "system",
@@ -446,7 +476,7 @@ class TestOutputPredictionAssistant(Assistant):
                 "### Response:"
             ),
         ])
-        print("\n\n\n Prompt variables:", self.prompt_template.input_variables)
+        logger.debug(f"Prompt variables: {self.prompt_template.input_variables}")
 
 
     def __call__(self, state: State, config: RunnableConfig = None):
@@ -465,7 +495,7 @@ class TestOutputPredictionAssistant(Assistant):
 
 class CodeExecutionAssistant(Assistant):
     def __init__(self, model_name):
-        self.llm = create_llm(model_name)
+        self.llm = create_llm(model_name, class_name=self.__class__.__name__)
         self.prompt_template = ChatPromptTemplate.from_messages([
             (
                 "system",

@@ -2,6 +2,7 @@ from abc import abstractmethod, ABC
 import os
 from utils import execute_command
 import re
+from config import logger
 
 
 
@@ -36,8 +37,8 @@ class Executor(ABC):
         """
 
         code_lines = open(source_file).readlines()
-        print(code_lines[0])
-        print(code_lines[1])
+        logger.debug(f"First line: {code_lines[0]}")
+        logger.debug(f"Second line: {code_lines[1]}")
         start_idx = None
         end_idx = None
         for idx, line in enumerate(code_lines):
@@ -84,7 +85,7 @@ class HaskellExecutor(Executor):
 
         output = output.replace("Killed", "")
         
-        print(output)
+        logger.debug(f"Haskell execution output: {output}")
         
         ce_pattern = re.compile(
             r"app/Main\.hs:(\d+):(\d+): error:(.+?)(?=app/Main\.hs|\Z)",
@@ -96,8 +97,7 @@ class HaskellExecutor(Executor):
         summary_pattern = re.compile(
                 r"Cases: (\d+)\s+Tried: (\d+)\s+Errors: (\d+)\s+Failures: (\d+)")
         summary_match = summary_pattern.findall(output)
-        print(summary_match)
-        print("summary_match")
+        logger.debug(f"Summary match: {summary_match}")
         if len(summary_match) == 0:
             return [-1, -5, -5, output]
         else:
@@ -129,7 +129,7 @@ class HaskellExecutor(Executor):
         tuple: A tuple containing the execution result.
         """
 
-        print("Executing Haskell code")
+        logger.info("Executing Haskell code")
         curr_dir = os.getcwd()
         os.chdir(env_dir)
         output = execute_command(f"cabal run haskell", timeout=self.timeout_limit)
@@ -184,7 +184,7 @@ class OcamlExecutor(Executor):
             n_tests = match.group(1)
             return [0, n_tests, 0, output]
         else:
-            print(output)
+            logger.error(f"OCaml output parsing failed: {output}")
             assert False, "No match found"
         
     def execute(self, env_dir) -> tuple[int, int, int, str]:
@@ -204,15 +204,15 @@ class OcamlExecutor(Executor):
         tuple: A tuple containing the execution result.
         """
         
-        print("Executing OCaml code")
+        logger.info("Executing OCaml code")
         curr_dir = os.getcwd()
         os.chdir(env_dir)
         compile_output = execute_command(f"opam exec -- dune build --root .", timeout=self.timeout_limit)
-        print(f"Compile output: {compile_output}")
+        logger.debug(f"Compile output: {compile_output}")
         execute_output = execute_command( f"opam exec -- dune exec ocaml --root .",
             timeout=self.timeout_limit
         )
-        print(f"Execute output: {execute_output}")
+        logger.debug(f"Execute output: {execute_output}")
         os.chdir(curr_dir)
         assert os.getcwd() == curr_dir, "Current directory not restored"
         
@@ -277,10 +277,10 @@ class ScalaExecutor(Executor):
         tuple: A tuple containing the execution result.
         """
         
-        print("Executing Scala code")
+        logger.info("Executing Scala code")
         curr_dir = os.getcwd()
         os.chdir(env_dir)
-        print(os.getcwd())
+        logger.debug(f"Current working directory: {os.getcwd()}")
         execute_output = execute_command(f"sbt test", timeout=self.timeout_limit)
         
         os.chdir(curr_dir)
@@ -444,9 +444,9 @@ class JavaExecutor(Executor):
 
 
         
-        print(f"🧩 Extracted body lines:")
+        logger.debug(f"Extracted body lines: {len(body_lines)}")
         for ln in body_lines:
-            print("   ", ln)
+            logger.debug(f"   {ln}")
         pkg_idx = 0
         for idx, ln in enumerate(original_lines):
             if ln.strip().startswith('package '):
@@ -466,8 +466,8 @@ class JavaExecutor(Executor):
                 end_idx = idx
         assert start_idx is not None, f"Start marker '{self.start_line}' not found"
         assert end_idx is not None, f"End marker '{self.end_line}' not found"
-        print(f"🔖 Start marker at line {start_idx}, End marker at line {end_idx}")
-        print(f"New lines = {str(new_lines[:start_idx+1])}")
+        logger.debug(f"Start marker at line {start_idx}, End marker at line {end_idx}")
+        logger.debug(f"New lines = {str(new_lines[:start_idx+1])}")
        
         # Build final content
         final = []

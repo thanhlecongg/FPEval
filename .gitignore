@@ -166,3 +166,8 @@ core/tmp/
 dataset/
 output/
 output_repaired/
+stats_output/
+stats_output.zip
+tmp/
+debug/
+results_llm_reasoning
