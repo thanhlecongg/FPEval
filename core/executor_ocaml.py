@@ -332,7 +332,7 @@ def read_file(filename):
     except:
         return None, None, None, None
 
-def save_haskell_files(problem_path):
+def main(problem_path):
     err = []
     i = 0
     env_dir = create_ocaml_env_copy()
@@ -377,7 +377,7 @@ def save_haskell_files(problem_path):
                     err.append("Syntaxx == none")
                     break
                 if check_ocaml_syntax_and_types(env_dir, ocaml_syntax):
-                    print("✅ True Syntax")
+                    print(" True Syntax")
                     try:
                         result = run_single_ocaml_test(env_dir, test_code, ocaml_code)
                         problem_results.append({
@@ -417,7 +417,7 @@ def save_haskell_files(problem_path):
                         continue
                 else:
                         
-                        print("❌False Syntax")
+                        print("False Syntax")
                         err.append("Syntax error")
                         break
             
@@ -440,6 +440,5 @@ def save_haskell_files(problem_path):
             continue
         
 
-
-save_haskell_files(private_testcase_path)
-print("Done!")
+if __name__ == "__main__":
+    main(private_testcase_path)

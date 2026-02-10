@@ -376,17 +376,11 @@ def read_file(filename):
         except:
             return None, None, None, None
         return row, private_row, test_code,meta_path
-import pickle
-common_files = []
-with open('/scratch/punim1928/NA/common_files.pkl', 'rb') as f:
-    common_files = pickle.load(f)
+
 def save_haskell_files(problem_path, error_log_file="error.txt"):
     del_file = []
     err = []
     i = 0
-    index = 0
-    start = 100*index
-    end = 100*(index+1)
     for filename in sorted(os.listdir(problem_path)):
         try:
             i+=1
