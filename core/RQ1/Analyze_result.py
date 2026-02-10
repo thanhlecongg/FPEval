@@ -5,7 +5,11 @@ import matplotlib.pyplot as plt
 import pickle
 import numpy as np
 
-
+def get_project_root():
+    return Path(__file__).resolve().parents[1]
+    #[0] core
+    #[1] FPEval
+project_root = get_project_root()
 languages = ['haskell', 'ocaml', 'scala','java']
 model = 'gpt3.5'
 labels = ["Pass", "Fail", "Compile_error", "Timeout"]
@@ -37,7 +41,7 @@ def classify_test_results(results):
 
 lang_results = {lang: Counter() for lang in languages}
 for lang in languages:
-    folder = Path(f"../ResultExecution/RQ1/{lang}/{model}")
+    folder = project_root / f"ResultExecution/RQ1/{lang}/{model}"
     i = 1
     o = 0
     for file_name in common_files:
