@@ -1,0 +1,22 @@
+version: '3.7'
+
+services:
+  pytorch_locpb_vllm_fix_code:
+    container_name: pytorch_locpb_vllm_fix_code
+    image: vllm/vllm-openai:v0.16.0
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/hf_cache:/root/.cache/huggingface/
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/:/working
+      # - ${DOCKER_VOLUME_DIRECTORY:-../../local-models}/local_models:/working/local_models
+      - /home/locpb4/local-models:/working/local_models
+    working_dir: /working
+    # entrypoint: ["/bin/bash", "-c", "sleep infinity"]
+    entrypoint: ["/bin/bash", "-c", "./scripts/run_fix_corrupted_code.sh"]
+    network_mode: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+              device_ids: [ '0', '1' , '2', '3']

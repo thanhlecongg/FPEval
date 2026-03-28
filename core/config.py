@@ -32,7 +32,7 @@ formatter = logging.Formatter(
 )
 
 # File handler - logs to file
-file_handler = logging.FileHandler('FPEval_stats.log')
+file_handler = logging.FileHandler('FPEval_deepseek-coder-1.3b-instruct_java.log')
 file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(formatter)
 

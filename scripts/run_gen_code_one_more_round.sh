@@ -19,17 +19,19 @@ export OPENAI_API_KEY=hf_____
 export HF_TOKEN=hf_____
 # export WORKFLOW=basic
 export WORKFLOW=basic
-# export MODEL_NAME=openai/gpt-4o-mini #openai/gpt-4o
-# export MODEL_NAME=baoloctown/qwencoder-3b-moe
-# export MODEL_NAME=Qwen/Qwen2.5-Coder-3B-Instruct-scala-peft-500k-merged
-# export MODEL_NAME=Qwen/Qwen2.5-Coder-1.5B-Instruct-all-peft-500k-merged
-# export MODLE_NAME=Qwen/Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-finetuned-100k-merged
-# export MODEL_NAME=Qwen/Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged-100k-finetuned
-# export MODEL_NAME=Qwen/Qwen2.5-Coder-1.5B-Instruct-ocaml-peft-500k-merged
-# export MODEL_NAME=Qwen/Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged
+# export MODEL_NAME=Qwen/Qwen2.5-Coder-1.5B-Instruct
+# export MODEL_NAME=Qwen/Qwen2.5-Coder-3B-Instruct
+# export MODEL_NAME=Qwen/Qwen2.5-Coder-3B-Instruct-all-peft-500k-merged
+# export MODEL_NAME=Qwen/Qwen2.5-Coder-3B-Instruct-haskell-peft-500k-merged
 # export MODEL_NAME=Qwen/Qwen2.5-Coder-3B-Instruct-ocaml-peft-500k-merged
-# export MODEL_NAME=deepseek-ai/deepseek-coder-6.7b-instruct
-export MODEL_NAME=Qwen/Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged
+# export MODEL_NAME=Qwen/Qwen2.5-Coder-3B-Instruct-scala-peft-500k-merged
+# export MODEL_NAME=Qwen/Qwen2.5-Coder-3B-Instruct-scala-peft-500k-merged
+# export MODEL_NAME=Qwen/Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged
+# export MODEL_NAME=Qwen/Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged
+
+export MODEL_NAME=Qwen/Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged-100k-finetuned
+# export MODEL_NAME=Qwen/Qwen3-Coder-30B-A3B-Instruct
+# export MODEL_NAME=Qwen/Qwen2.5-Coder-1.5B-Instruct-all-peft-500k-merged
 export OUTPUT_PATH=/workspace/output/
 
 # Change to core directory so Python can find the modules

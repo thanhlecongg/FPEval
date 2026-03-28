@@ -170,4 +170,9 @@ stats_output/
 stats_output.zip
 tmp/
 debug/
-results_llm_reasoning
+results_llm_reasoning/
+output*
+demo/
+envs/
+hf_cache/
+local_models/

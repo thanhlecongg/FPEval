@@ -1,0 +1,22 @@
+
+Qwen3-Coder-30B-A3B-Instruct
+Qwen2.5-Coder-3B-Instruct-scala-peft-500k-merged
+Qwen2.5-Coder-3B-Instruct-ocaml-peft-500k-merged
+Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged-100k-finetuned
+Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged
+Qwen2.5-Coder-3B-Instruct-haskell-peft-500k-merged
+Qwen2.5-Coder-3B-Instruct-all-peft-500k-merged
+Qwen2.5-Coder-3B-Instruct
+Qwen2.5-Coder-14B-Instruct
+Qwen2.5-Coder-1.5B-Instruct
+Qwen2.5-Coder-1.5B-Instruct-scala-peft-500k-merged
+Qwen2.5-Coder-1.5B-Instruct-ocaml-peft-500k-merged
+Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged-100k-finetuned
+Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged
+Qwen2.5-Coder-1.5B-Instruct-haskell-peft-500k-merged
+Qwen2.5-Coder-1.5B-Instruct-all-peft-500k-merged
+Qwen2.5-Coder-1.5B-Instruct
+deepseek-coder-6.7b-instruct
+deepseek-coder-1.3b-instruct
+
+docker compose -f docker-compose.vllm.yml down;docker compose -f docker-compose.vllm.yml up -d;docker logs -f pytorch_locpb_vllm_fix_code

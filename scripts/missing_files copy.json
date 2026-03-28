@@ -1,0 +1,292 @@
+[
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-1.5B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-1.5B-Instruct-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-1.5B-Instruct-haskell-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged-100k-finetuned",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-1.5B-Instruct-ocaml-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-1.5B-Instruct-scala-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-14B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-3B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-3B-Instruct-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-3B-Instruct-haskell-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged-100k-finetuned",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-3B-Instruct-ocaml-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen2.5-Coder-3B-Instruct-scala-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/Qwen/Qwen3-Coder-30B-A3B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/deepseek-ai/deepseek-coder-1.3b-instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/haskell/deepseek-ai/deepseek-coder-6.7b-instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-1.5B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-1.5B-Instruct-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-1.5B-Instruct-haskell-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged-100k-finetuned",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-1.5B-Instruct-ocaml-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-1.5B-Instruct-scala-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-14B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-3B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-3B-Instruct-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-3B-Instruct-haskell-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged-100k-finetuned",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-3B-Instruct-ocaml-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen2.5-Coder-3B-Instruct-scala-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/java/Qwen/Qwen3-Coder-30B-A3B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/java/deepseek-ai/deepseek-coder-1.3b-instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/java/deepseek-ai/deepseek-coder-6.7b-instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-1.5B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-1.5B-Instruct-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-1.5B-Instruct-haskell-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged-100k-finetuned",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-1.5B-Instruct-ocaml-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-1.5B-Instruct-scala-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-14B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-3B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-3B-Instruct-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-3B-Instruct-haskell-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged-100k-finetuned",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-3B-Instruct-ocaml-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen2.5-Coder-3B-Instruct-scala-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/Qwen/Qwen3-Coder-30B-A3B-Instruct",
+        "missing": [
+            "increment_submatrices_by_one.json"
+        ]
+    },
+    {
+        "name": "./output/ocaml/deepseek-ai/deepseek-coder-1.3b-instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/ocaml/deepseek-ai/deepseek-coder-6.7b-instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-1.5B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-1.5B-Instruct-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-1.5B-Instruct-haskell-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-1.5B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged-100k-finetuned",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-1.5B-Instruct-ocaml-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-1.5B-Instruct-scala-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-14B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-3B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-3B-Instruct-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-3B-Instruct-haskell-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-3B-Instruct-moe-finetuned-ver-1-all-peft-500k-merged-100k-finetuned",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-3B-Instruct-ocaml-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen2.5-Coder-3B-Instruct-scala-peft-500k-merged",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/Qwen/Qwen3-Coder-30B-A3B-Instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/deepseek-ai/deepseek-coder-1.3b-instruct",
+        "missing": []
+    },
+    {
+        "name": "./output/scala/deepseek-ai/deepseek-coder-6.7b-instruct",
+        "missing": []
+    }
+]

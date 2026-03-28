@@ -163,6 +163,90 @@ def create_llm(model_name: str, class_name: str = None):
                 "chat_template_kwargs": {"enable_thinking": False},
             }
         )
+    elif model_name == "deepseek-ai/deepseek-coder-1.3b-instruct":
+        logger.debug("Using deepseek-ai/deepseek-coder-1.3b-instruct")
+        return ChatOpenAI(
+            model="deepseek-ai/deepseek-coder-1.3b-instruct",
+            temperature=1,
+            max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY', ''),
+            extra_body={
+                "chat_template_kwargs": {"enable_thinking": False},
+            }
+        )
+    elif model_name == "deepseek-ai/deepseek-coder-6.7b-instruct":
+        logger.debug("Using deepseek-ai/deepseek-coder-6.7b-instruct")
+        return ChatOpenAI(
+            model="deepseek-ai/deepseek-coder-6.7b-instruct",
+            temperature=1,
+            max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY'),
+            extra_body={
+                "chat_template_kwargs": {"enable_thinking": False},
+            }
+        )
+    elif model_name == "baoloctown/qwencoder-3b-moe":
+        logger.debug("Using baoloctown/qwencoder-3b-moe")
+        return ChatOpenAI(
+            model="baoloctown/qwencoder-3b-moe",
+            temperature=1,
+            max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY'),
+            extra_body={
+                "chat_template_kwargs": {"enable_thinking": False},
+            }
+        )
+    elif model_name == "Qwen/Qwen2.5-Coder-3B-Instruct":
+        logger.debug("Using Qwen/Qwen2.5-Coder-3B-Instruct")
+        return ChatOpenAI(
+            model="Qwen/Qwen2.5-Coder-3B-Instruct",
+            temperature=1,
+            max_tokens=4098,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY'),
+            extra_body={
+                "chat_template_kwargs": {"enable_thinking": False},
+            }
+        )
+    elif "Qwen/Qwen2.5-Coder-3B-Instruct-" in model_name:
+        logger.debug(f"Using {model_name} vllm")
+        return ChatOpenAI(
+            model=model_name,
+            temperature=1,
+            max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY')
+        )
+    elif "Qwen/Qwen2.5-Coder-1.5B-Instruct" in model_name:
+        logger.debug(f"Using {model_name} vllm")
+        return ChatOpenAI(
+            model=model_name,
+            temperature=1,
+            max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY')
+        )
+    elif "Qwen/Qwen2.5-Coder-14B-Instruct" in model_name:
+        logger.debug(f"Using {model_name} vllm")
+        return ChatOpenAI(
+            model=model_name,
+            temperature=1,
+            max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY')
+        )
+    elif "Qwen/Qwen3-0.6B-moe" in model_name:
+        logger.debug(f"Using {model_name} vllm")
+        return ChatOpenAI(
+            model=model_name,
+            temperature=1,
+            max_tokens=2048,
+            base_url=os.environ.get('BASE_URL', ''),
+            api_key=os.environ.get('OPENAI_API_KEY')
+        )
     elif model_name == "sonnet":
         return ChatAnthropic(
             model="claude-3-5-sonnet-20241022",
@@ -373,7 +457,7 @@ class CodingAssistant(Assistant):
             ),
             ("human", "### QUESTION:\n{description}\n"
             "### FORMAT: You will use the following starter code to write the solution to the problem and enclose your code within delimiters.\n{template}\n"
-            "### ANSWER: (use the provided format with backticks)\n"),
+            "### ANSWER: (use the provided format with backticks, do not include any other text or comments or thinking)\n"),
         ])
         if not self.test_connection():
             raise ValueError(f"CodingAssistant LLM connection FAILED for model '{self.llm.model_name}'")

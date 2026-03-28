@@ -10,7 +10,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # MODEL_NAME="${MODEL_NAME:-gpt-3.5-turbo}"
 # MODEL_NAME="${MODEL_NAME:-gpt-4o}"
 # MODEL_NAME="${MODEL_NAME:-gpt-5}"
-MODEL_NAME="${MODEL_NAME:-Qwen/Qwen2.5-1.5B-Instruct}"
+MODEL_NAME="${MODEL_NAME:-Qwen/Qwen2.5-Coder-3B-Instruct}"
 # haskell ocaml scala java
 LANGUAGES=(${LANGUAGES:-haskell ocaml scala})
 
